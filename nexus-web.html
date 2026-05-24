@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Community Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .online {
+            background: #10b981;
+            color: white;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        .post-list, .comment-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .post-item, .comment-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        
+        .post-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .post-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .token-display {
+            background: #f0fdf4;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Nexus Community Platform
+                <span id="statusBadge" class="status online">Live</span>
+            </h1>
+            <p>API: http://localhost:3001</p>
+        </div>
+        
+        <div class="grid">
+            <!-- Auth Card -->
+            <div class="card">
+                <h2>🔐 Authentication</h2>
+                <input type="text" id="username" placeholder="Username" value="demouser">
+                <input type="email" id="email" placeholder="Email" value="demo@nexus.com">
+                <input type="password" id="password" placeholder="Password" value="Test123456">
+                <input type="text" id="displayName" placeholder="Display Name" value="Demo User">
+                <button onclick="register()">Register</button>
+                <button onclick="login()">Login</button>
+                <div id="tokenDisplay" class="token-display">No token yet</div>
+            </div>
+            
+            <!-- Spaces Card -->
+            <div class="card">
+                <h2>🏠 Create Space</h2>
+                <input type="text" id="spaceName" placeholder="Space Name" value="My Community">
+                <textarea id="spaceDesc" placeholder="Description" rows="2">A great place for discussions</textarea>
+                <select id="spaceVisibility">
+                    <option value="PUBLIC">Public</option>
+                    <option value="RESTRICTED">Restricted</option>
+                </select>
+                <button onclick="createSpace()">Create Space</button>
+                <button onclick="listSpaces()">List All Spaces</button>
+                <div id="spacesList"></div>
+            </div>
+            
+            <!-- Posts Card -->
+            <div class="card">
+                <h2>📝 Create Post</h2>
+                <input type="text" id="postTitle" placeholder="Title" value="Hello Nexus!">
+                <textarea id="postContent" placeholder="Content" rows="3">This is my first post!</textarea>
+                <input type="text" id="postSpaceSlug" placeholder="Space Slug">
+                <button onclick="createPost()">Create Post</button>
+                <button onclick="listPosts()">List Posts</button>
+                <div id="postsList" class="post-list"></div>
+            </div>
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="card">
+            <h2>💬 Comments</h2>
+            <input type="text" id="commentPostId" placeholder="Post ID">
+            <textarea id="commentContent" placeholder="Your comment" rows="2"></textarea>
+            <button onclick="createComment()">Post Comment</button>
+            <button onclick="loadComments()">Load Comments</button>
+            <div id="commentsList" class="comment-list"></div>
+        </div>
+        
+        <!-- Response Display -->
+        <div class="card">
+            <h2>📡 API Response</h2>
+            <pre id="response" style="background: #f8f9fa; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 12px;">Ready...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let currentToken = localStorage.getItem('token') || '';
+        
+        function updateTokenDisplay() {
+            if (currentToken) {
+                document.getElementById('tokenDisplay').innerHTML = 'Token: ' + currentToken.substring(0, 50) + '...';
+            } else {
+                document.getElementById('tokenDisplay').innerHTML = 'No token (login required)';
+            }
+        }
+        
+        async function apiCall(endpoint, method, data, needsAuth = false) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (needsAuth && currentToken) {
+                headers['Authorization'] = `Bearer ${currentToken}`;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method,
+                    headers,
+                    body: data ? JSON.stringify(data) : undefined
+                });
+                
+                const result = await response.json();
+                document.getElementById('response').innerHTML = JSON.stringify(result, null, 2);
+                
+                if (response.ok && result.tokens) {
+                    currentToken = result.tokens.accessToken;
+                    localStorage.setItem('token', currentToken);
+                    updateTokenDisplay();
+                }
+                
+                return result;
+            } catch (error) {
+                document.getElementById('response').innerHTML = `Error: ${error.message}`;
+            }
+        }
+        
+        async function register() {
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                displayName: document.getElementById('displayName').value
+            };
+            await apiCall('/auth/register', 'POST', data);
+        }
+        
+        async function login() {
+            const data = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            await apiCall('/auth/login', 'POST', data);
+        }
+        
+        async function createSpace() {
+            if (!currentToken) { alert('Please login first'); return; }
+            const data = {
+                name: document.getElementById('spaceName').value,
+                description: document.getElementById('spaceDesc').value,
+                visibility: document.getElementById('spaceVisibility').value
+            };
+            await apiCall('/spaces', 'POST', data, true);
+        }
+        
+        async function listSpaces() {
+            const result = await apiCall('/spaces', 'GET');
+            if (result.spaces) {
+                const html = result.spaces.map(s => `
+                    <div class="post-item">
+                        <div class="post-title">🏠 ${s.name}</div>
+                        <div class="post-meta">Slug: ${s.slug} | Members: ${s.memberCount}</div>
+                    </div>
+                `).join('');
+                document.getElementById('spacesList').innerHTML = html;
+            }
+        }
+        
+        async function createPost() {
+            if (!currentToken) { alert('Please login first'); return; }
+            const data = {
+                title: document.getElementById('postTitle').value,
+                content: document.getElementById('postContent').value,
+                spaceSlug: document.getElementById('postSpaceSlug').value,
+                type: 'TEXT'
+            };
+            await apiCall('/posts', 'POST', data, true);
+        }
+        
+        async function listPosts() {
+            const slug = document.getElementById('postSpaceSlug').value;
+            if (!slug) { alert('Enter space slug'); return; }
+            const result = await apiCall(`/posts/space/${slug}`, 'GET');
+            if (result.posts) {
+                const html = result.posts.map(p => `
+                    <div class="post-item">
+                        <div class="post-title">📝 ${p.title}</div>
+                        <div class="post-meta">By ${p.author.displayName} | Comments: ${p.commentCount}</div>
+                        <div style="font-size: 12px; margin-top: 5px;">${p.content?.substring(0, 100)}</div>
+                    </div>
+                `).join('');
+                document.getElementById('postsList').innerHTML = html;
+            }
+        }
+        
+        async function createComment() {
+            if (!currentToken) { alert('Please login first'); return; }
+            const data = {
+                content: document.getElementById('commentContent').value,
+                postId: document.getElementById('commentPostId').value
+            };
+            await apiCall('/comments', 'POST', data, true);
+        }
+        
+        async function loadComments() {
+            const postId = document.getElementById('commentPostId').value;
+            if (!postId) { alert('Enter post ID'); return; }
+            const result = await apiCall(`/comments/post/${postId}`, 'GET');
+            if (result.comments) {
+                const html = result.comments.map(c => `
+                    <div class="comment-item">
+                        <strong>${c.author.displayName}</strong>: ${c.content}
+                        <div class="post-meta">Depth: ${c.depth} | 👍 ${c.upvotes}</div>
+                    </div>
+                `).join('');
+                document.getElementById('commentsList').innerHTML = html;
+            }
+        }
+        
+        updateTokenDisplay();
+        
+        // Check API health
+        fetch('http://localhost:3001/health')
+            .then(r => r.json())
+            .then(data => console.log('API Online:', data))
+            .catch(err => console.error('API Offline:', err));
+    </script>
+</body>
+</html>
