@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nexus API Tester</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; border-bottom: 3px solid #e94560; padding-bottom: 10px; }
+        .section { 
+            background: #f9f9f9; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 5px;
+            border-left: 4px solid #e94560;
+        }
+        input, textarea, select { 
+            width: 100%; 
+            padding: 8px; 
+            margin: 5px 0 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+        button { 
+            background: #e94560; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin: 5px 5px 0 0;
+            font-size: 14px;
+        }
+        button:hover { background: #d63b55; }
+        .response { 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            padding: 15px; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { color: #4caf50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .status { padding: 5px 10px; border-radius: 4px; font-size: 12px; display: inline-block; margin-left: 10px; }
+        .online { background: #4caf50; color: white; }
+        .offline { background: #f44336; color: white; }
+        .token-display { background: #e8f5e9; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Nexus API Live Tester</h1>
+        
+        <div id="apiStatus">
+            Checking API connection...
+        </div>
+        
+        <!-- Authentication Section -->
+        <div class="section">
+            <h3>🔐 Authentication</h3>
+            <div style="display: grid; gap: 10px;">
+                <div>
+                    <input type="text" id="regUsername" placeholder="Username" value="testuser">
+                    <input type="email" id="regEmail" placeholder="Email" value="test@example.com">
+                    <input type="password" id="regPassword" placeholder="Password" value="Test123456">
+                    <input type="text" id="regDisplayName" placeholder="Display Name" value="Test User">
+                    <button onclick="register()">Register</button>
+                    <button onclick="login()">Login</button>
+                </div>
+                <div>
+                    <strong>Your Token:</strong>
+                    <div class="token-display" id="tokenDisplay">No token yet</div>
+                    <button onclick="clearToken()">Clear Token</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Spaces Section -->
+        <div class="section">
+            <h3>🏠 Spaces</h3>
+            <div>
+                <input type="text" id="spaceName" placeholder="Space Name" value="My Community">
+                <textarea id="spaceDesc" placeholder="Description" rows="2">A great place for discussions</textarea>
+                <select id="spaceVisibility">
+                    <option value="PUBLIC">Public</option>
+                    <option value="RESTRICTED">Restricted</option>
+                    <option value="PRIVATE">Private</option>
+                </select>
+                <button onclick="createSpace()">Create Space</button>
+                <button onclick="listSpaces()">List All Spaces</button>
+            </div>
+        </div>
+        
+        <!-- Posts Section -->
+        <div class="section">
+            <h3>📝 Posts</h3>
+            <div>
+                <input type="text" id="postTitle" placeholder="Post Title" value="Hello Nexus!">
+                <textarea id="postContent" placeholder="Post Content" rows="3">This is my first post!</textarea>
+                <input type="text" id="postSpaceSlug" placeholder="Space Slug (e.g., my-community)">
+                <select id="postType">
+                    <option value="TEXT">Text Post</option>
+                    <option value="LINK">Link Post</option>
+                </select>
+                <button onclick="createPost()">Create Post</button>
+                <button onclick="listPosts()">List Posts in Space</button>
+            </div>
+        </div>
+        
+        <!-- Response Section -->
+        <div class="section">
+            <h3>📡 API Response</h3>
+            <div class="response" id="response">Ready to test API calls...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let currentToken = localStorage.getItem('token') || '';
+        
+        // Update token display
+        function updateTokenDisplay() {
+            if (currentToken) {
+                document.getElementById('tokenDisplay').innerHTML = currentToken.substring(0, 50) + '...';
+                document.getElementById('tokenDisplay').style.background = '#e8f5e9';
+            } else {
+                document.getElementById('tokenDisplay').innerHTML = 'No token (you need to login first)';
+                document.getElementById('tokenDisplay').style.background = '#fff3e0';
+            }
+        }
+        
+        // Check API status
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                if (response.ok) {
+                    document.getElementById('apiStatus').innerHTML = '✅ API Status: <span class="status online">ONLINE</span> - Ready to test!';
+                } else {
+                    document.getElementById('apiStatus').innerHTML = '⚠️ API Status: <span class="status offline">RESPONDING BUT ERROR</span>';
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = '❌ API Status: <span class="status offline">OFFLINE</span> - Make sure to run "npm run dev" in backend folder';
+            }
+        }
+        
+        // API call helper
+        async function apiCall(endpoint, method, data, needsAuth = false) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (needsAuth && currentToken) {
+                headers['Authorization'] = `Bearer ${currentToken}`;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method,
+                    headers,
+                    body: data ? JSON.stringify(data) : undefined
+                });
+                
+                const result = await response.json();
+                document.getElementById('response').innerHTML = JSON.stringify(result, null, 2);
+                
+                if (response.ok && result.tokens) {
+                    currentToken = result.tokens.accessToken;
+                    localStorage.setItem('token', currentToken);
+                    updateTokenDisplay();
+                }
+                
+                return result;
+            } catch (error) {
+                document.getElementById('response').innerHTML = `Error: ${error.message}\n\nMake sure the API server is running on port 3001`;
+                console.error('API Error:', error);
+            }
+        }
+        
+        // Auth functions
+        async function register() {
+            const data = {
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                displayName: document.getElementById('regDisplayName').value
+            };
+            await apiCall('/auth/register', 'POST', data);
+        }
+        
+        async function login() {
+            const data = {
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value
+            };
+            await apiCall('/auth/login', 'POST', data);
+        }
+        
+        function clearToken() {
+            currentToken = '';
+            localStorage.removeItem('token');
+            updateTokenDisplay();
+            document.getElementById('response').innerHTML = 'Token cleared. You are now logged out.';
+        }
+        
+        // Space functions
+        async function createSpace() {
+            if (!currentToken) {
+                document.getElementById('response').innerHTML = '❌ Please login first!';
+                return;
+            }
+            const data = {
+                name: document.getElementById('spaceName').value,
+                description: document.getElementById('spaceDesc').value,
+                visibility: document.getElementById('spaceVisibility').value
+            };
+            await apiCall('/spaces', 'POST', data, true);
+        }
+        
+        async function listSpaces() {
+            await apiCall('/spaces', 'GET');
+        }
+        
+        // Post functions
+        async function createPost() {
+            if (!currentToken) {
+                document.getElementById('response').innerHTML = '❌ Please login first!';
+                return;
+            }
+            const data = {
+                title: document.getElementById('postTitle').value,
+                content: document.getElementById('postContent').value,
+                spaceSlug: document.getElementById('postSpaceSlug').value,
+                type: document.getElementById('postType').value
+            };
+            await apiCall('/posts', 'POST', data, true);
+        }
+        
+        async function listPosts() {
+            const slug = document.getElementById('postSpaceSlug').value;
+            if (!slug) {
+                document.getElementById('response').innerHTML = '❌ Please enter a space slug!';
+                return;
+            }
+            await apiCall(`/posts/space/${slug}`, 'GET');
+        }
+        
+        // Initialize
+        updateTokenDisplay();
+        checkApiStatus();
+        
+        // Check status every 5 seconds
+        setInterval(checkApiStatus, 5000);
+    </script>
+</body>
+</html>

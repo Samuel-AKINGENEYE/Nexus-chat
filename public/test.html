@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nexus API Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a2e; color: #eee; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: #16213e; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        input, textarea, select { width: 100%; padding: 8px; margin: 5px 0; background: #0f3460; color: white; border: none; border-radius: 4px; }
+        button { background: #e94560; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #ff6b6b; }
+        pre { background: #0f3460; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .tab { display: inline-block; padding: 10px 20px; background: #0f3460; cursor: pointer; margin-right: 5px; border-radius: 4px 4px 0 0; }
+        .tab.active { background: #e94560; }
+        .tab-content { display: none; background: #16213e; padding: 20px; border-radius: 0 8px 8px 8px; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Nexus API Live Tester</h1>
+        <p>API Base URL: <strong id="apiUrl">http://localhost:3001/api</strong></p>
+        
+        <div>
+            <div class="tab active" onclick="showTab('auth')">🔐 Authentication</div>
+            <div class="tab" onclick="showTab('spaces')">🏠 Spaces</div>
+            <div class="tab" onclick="showTab('posts')">📝 Posts</div>
+        </div>
+        
+        <!-- Auth Tab -->
+        <div id="auth" class="tab-content active">
+            <div class="card">
+                <h3>Register User</h3>
+                <input type="text" id="regUsername" placeholder="Username" value="testuser">
+                <input type="email" id="regEmail" placeholder="Email" value="test@example.com">
+                <input type="password" id="regPassword" placeholder="Password" value="Test123456">
+                <input type="text" id="regDisplayName" placeholder="Display Name" value="Test User">
+                <button onclick="register()">Register</button>
+            </div>
+            
+            <div class="card">
+                <h3>Login</h3>
+                <input type="email" id="loginEmail" placeholder="Email" value="test@example.com">
+                <input type="password" id="loginPassword" placeholder="Password" value="Test123456">
+                <button onclick="login()">Login</button>
+            </div>
+            
+            <div class="card">
+                <h3>Current Token</h3>
+                <textarea id="token" rows="2" placeholder="JWT Token"></textarea>
+                <button onclick="clearToken()">Clear Token</button>
+            </div>
+        </div>
+        
+        <!-- Spaces Tab -->
+        <div id="spaces" class="tab-content">
+            <div class="card">
+                <h3>Create Space</h3>
+                <input type="text" id="spaceName" placeholder="Space Name" value="My Awesome Space">
+                <textarea id="spaceDesc" placeholder="Description">A great community for discussions</textarea>
+                <select id="spaceVisibility">
+                    <option value="PUBLIC">Public</option>
+                    <option value="RESTRICTED">Restricted</option>
+                    <option value="PRIVATE">Private</option>
+                </select>
+                <button onclick="createSpace()">Create Space</button>
+            </div>
+            
+            <div class="card">
+                <h3>List Spaces</h3>
+                <button onclick="listSpaces()">Get All Spaces</button>
+            </div>
+            
+            <div class="card">
+                <h3>Get Space by Slug</h3>
+                <input type="text" id="spaceSlug" placeholder="Space Slug">
+                <button onclick="getSpace()">Get Space</button>
+            </div>
+        </div>
+        
+        <!-- Posts Tab -->
+        <div id="posts" class="tab-content">
+            <div class="card">
+                <h3>Create Post</h3>
+                <input type="text" id="postTitle" placeholder="Title" value="Hello Nexus!">
+                <textarea id="postContent" placeholder="Content">This is my first post!</textarea>
+                <input type="text" id="postSpaceSlug" placeholder="Space Slug">
+                <select id="postType">
+                    <option value="TEXT">Text</option>
+                    <option value="IMAGE">Image</option>
+                    <option value="LINK">Link</option>
+                </select>
+                <button onclick="createPost()">Create Post</button>
+            </div>
+            
+            <div class="card">
+                <h3>List Posts in Space</h3>
+                <input type="text" id="listSpaceSlug" placeholder="Space Slug">
+                <button onclick="listPosts()">List Posts</button>
+            </div>
+        </div>
+        
+        <!-- Response Display -->
+        <div class="card">
+            <h3>📡 Response</h3>
+            <pre id="response">Ready for action...</pre>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let currentToken = localStorage.getItem('token') || '';
+        
+        document.getElementById('token').value = currentToken;
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function apiCall(endpoint, method, data, auth = false) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (auth && currentToken) {
+                headers['Authorization'] = `Bearer ${currentToken}`;
+            }
+            
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method,
+                headers,
+                body: data ? JSON.stringify(data) : undefined
+            });
+            
+            const result = await response.json();
+            document.getElementById('response').innerHTML = JSON.stringify(result, null, 2);
+            
+            if (response.ok && result.tokens) {
+                currentToken = result.tokens.accessToken;
+                localStorage.setItem('token', currentToken);
+                document.getElementById('token').value = currentToken;
+            }
+            
+            return result;
+        }
+        
+        async function register() {
+            const data = {
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                displayName: document.getElementById('regDisplayName').value
+            };
+            await apiCall('/auth/register', 'POST', data);
+        }
+        
+        async function login() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+            await apiCall('/auth/login', 'POST', data);
+        }
+        
+        function clearToken() {
+            currentToken = '';
+            localStorage.removeItem('token');
+            document.getElementById('token').value = '';
+            document.getElementById('response').innerHTML = 'Token cleared';
+        }
+        
+        async function createSpace() {
+            const data = {
+                name: document.getElementById('spaceName').value,
+                description: document.getElementById('spaceDesc').value,
+                visibility: document.getElementById('spaceVisibility').value
+            };
+            await apiCall('/spaces', 'POST', data, true);
+        }
+        
+        async function listSpaces() {
+            await apiCall('/spaces', 'GET', null, false);
+        }
+        
+        async function getSpace() {
+            const slug = document.getElementById('spaceSlug').value;
+            await apiCall(`/spaces/${slug}`, 'GET', null, false);
+        }
+        
+        async function createPost() {
+            const data = {
+                title: document.getElementById('postTitle').value,
+                content: document.getElementById('postContent').value,
+                spaceSlug: document.getElementById('postSpaceSlug').value,
+                type: document.getElementById('postType').value
+            };
+            await apiCall('/posts', 'POST', data, true);
+        }
+        
+        async function listPosts() {
+            const slug = document.getElementById('listSpaceSlug').value;
+            await apiCall(`/posts/space/${slug}`, 'GET', null, false);
+        }
+    </script>
+</body>
+</html>
