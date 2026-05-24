@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Notifications</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .notification-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .notification-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .notification-item.read {
+            opacity: 0.7;
+            border-left-color: #ccc;
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .notification-body {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .unread-badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .mark-read-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .mark-read-btn:hover {
+            background: #059669;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        .notification-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="notification-header">
+                <h1>🔔 Notifications</h1>
+                <div>
+                    <span id="unreadCount" class="badge">0</span>
+                    <button onclick="markAllAsRead()">Mark all as read</button>
+                    <button onclick="loadNotifications()">Refresh</button>
+                </div>
+            </div>
+            <div id="notificationList" class="notification-list">
+                <div class="loading">Loading notifications...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let currentToken = localStorage.getItem('token') || '';
+        
+        // Check if user is logged in
+        if (!currentToken) {
+            window.location.href = '/nexus-web.html';
+        }
+        
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            };
+            
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method,
+                headers,
+                body: data ? JSON.stringify(data) : undefined
+            });
+            
+            return response.json();
+        }
+        
+        async function loadNotifications() {
+            try {
+                const result = await apiCall('/notifications?limit=50');
+                displayNotifications(result.notifications);
+                
+                // Update unread count
+                const unreadResult = await apiCall('/notifications/unread/count');
+                document.getElementById('unreadCount').innerText = unreadResult.unreadCount;
+            } catch (error) {
+                document.getElementById('notificationList').innerHTML = '<div class="empty">Error loading notifications</div>';
+            }
+        }
+        
+        function displayNotifications(notifications) {
+            const container = document.getElementById('notificationList');
+            
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="empty">No notifications yet</div>';
+                return;
+            }
+            
+            const getIcon = (type) => {
+                const icons = {
+                    'COMMENT_ON_POST': '💬',
+                    'REPLY_TO_COMMENT': '↩️',
+                    'MENTION': '@',
+                    'NEW_DM': '✉️',
+                    'UPVOTE_MILESTONE': '👍',
+                    'NEW_POST_IN_SPACE': '📝',
+                    'MOD_ACTION': '🛡️',
+                    'SPACE_INVITE': '🏠'
+                };
+                return icons[type] || '🔔';
+            };
+            
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.isRead ? 'read' : ''}" onclick="markAsRead('${notif.id}')">
+                    <div style="display: flex; align-items: flex-start;">
+                        <div class="notification-icon">${getIcon(notif.type)}</div>
+                        <div style="flex: 1;">
+                            <div class="notification-title">
+                                ${notif.title}
+                                ${!notif.isRead ? '<span class="unread-badge">New</span>' : ''}
+                            </div>
+                            <div class="notification-body">${notif.body}</div>
+                            <div class="notification-time">${new Date(notif.createdAt).toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function markAsRead(notificationId) {
+            await apiCall(`/notifications/${notificationId}/read`, 'PUT');
+            loadNotifications();
+        }
+        
+        async function markAllAsRead() {
+            await apiCall('/notifications/read/all', 'PUT');
+            loadNotifications();
+        }
+        
+        // Setup WebSocket for real-time notifications
+        function setupWebSocket() {
+            const ws = new WebSocket('ws://localhost:3001');
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                ws.send(JSON.stringify({ type: 'auth', token: currentToken }));
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'notification') {
+                    loadNotifications();
+                }
+            };
+        }
+        
+        // Initial load
+        loadNotifications();
+        setupWebSocket();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadNotifications, 30000);
+    </script>
+</body>
+</html>
