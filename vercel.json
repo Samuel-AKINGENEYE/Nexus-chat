@@ -1,9 +1,5 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "routes": [
-    { "src": "^/$", "dest": "/nexus-web.html" },
-    { "src": "^/api/(.*)", "dest": "https://nexus-chat-backend.onrender.com/api/$1" },
-    { "src": "^/(.*\\.html)$", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://nexus-chat-befb.onrender.com/api/:path*" }
   ]
 }

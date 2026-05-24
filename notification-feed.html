@@ -188,7 +188,7 @@
   const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const API = IS_LOCAL ? 'http://localhost:3001/api' : '/api';
   // Socket.io must connect directly to the backend (WebSocket upgrades can't be proxied by Vercel)
-  const SOCKET_HOST = IS_LOCAL ? 'http://localhost:3001' : 'https://nexus-chat-backend.onrender.com';
+  const SOCKET_HOST = IS_LOCAL ? 'http://localhost:3001' : 'https://nexus-chat-befb.onrender.com';
   const token = localStorage.getItem('nexus_token') || localStorage.getItem('token') || '';
   let allNotifs = [];
   let activeFilter = 'all';
