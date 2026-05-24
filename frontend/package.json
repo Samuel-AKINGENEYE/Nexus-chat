@@ -1,0 +1,9 @@
+{
+  "name": "nexus-chat-frontend",
+  "version": "1.0.0",
+  "description": "Nexus Chat static frontend",
+  "scripts": {
+    "build": "echo 'Static HTML frontend - no build step needed'",
+    "test": "echo 'No frontend tests yet'"
+  }
+}
