@@ -20,7 +20,6 @@ model User {
   lastSeenAt    DateTime  @default(now())
   deletedAt     DateTime?
   
-  // Relations
   posts         Post[]
   comments      Comment[]
   sessions      Session[]
@@ -55,7 +54,6 @@ model Space {
   updatedAt     DateTime      @updatedAt
   createdBy     String
   
-  // Relations
   creator       User          @relation("SpaceCreator", fields: [createdBy], references: [id])
   posts         Post[]
   members       SpaceMember[]
@@ -74,7 +72,6 @@ model SpaceMember {
   role        MemberRole    @default(CONTRIBUTOR)
   joinedAt    DateTime      @default(now())
   
-  // Relations
   space       Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   
@@ -88,34 +85,6 @@ enum MemberRole {
   GUEST
 }
 
-model Post {
-  id        String    @id @default(cuid())
-  title     String
-  content   String?
-  authorId  String
-  spaceId   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
-  // Relations
-  author    User      @relation(fields: [authorId], references: [id])
-  space     Space     @relation(fields: [spaceId], references: [id])
-  comments  Comment[]
-}
-
-model Comment {
-  id        String    @id @default(cuid())
-  content   String
-  authorId  String
-  postId    String
-  createdAt DateTime  @default(now())
-  
-  // Relations
-  author    User      @relation(fields: [authorId], references: [id])
-  post      Post      @relation(fields: [postId], references: [id])
-}
-
-// Update the existing Post model with missing fields
 model Post {
   id           String    @id @default(cuid())
   title        String
@@ -134,7 +103,6 @@ model Post {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
   
-  // Relations
   author       User      @relation(fields: [authorId], references: [id])
   space        Space     @relation(fields: [spaceId], references: [id])
   comments     Comment[]
@@ -145,4 +113,28 @@ enum PostType {
   IMAGE
   LINK
   POLL
+}
+
+model Comment {
+  id         String    @id @default(cuid())
+  content    String    @db.Text
+  authorId   String
+  postId     String
+  parentId   String?
+  depth      Int       @default(0)
+  upvotes    Int       @default(0)
+  downvotes  Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  
+  author     User      @relation(fields: [authorId], references: [id])
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent     Comment?  @relation("CommentTree", fields: [parentId], references: [id])
+  replies    Comment[] @relation("CommentTree")
+  
+  @@index([postId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@index([depth])
 }
