@@ -176,6 +176,33 @@ const getPost = async (req, res) => {
   }
 };
 
+const editPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content } = req.body;
+    const userId = req.user?.userId;
+
+    if (!title?.trim()) return res.status(400).json({ error: 'Title is required' });
+
+    const post = await prisma.post.findUnique({ where: { id } });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    if (post.authorId !== userId) return res.status(403).json({ error: 'Not your post' });
+    if (Date.now() - new Date(post.createdAt).getTime() > 15 * 60 * 1000) {
+      return res.status(403).json({ error: 'Edit window (15 minutes) has passed' });
+    }
+
+    const updated = await prisma.post.update({
+      where: { id },
+      data: { title: title.trim(), content: content?.trim() ?? post.content }
+    });
+
+    res.json({ message: 'Post updated', post: updated });
+  } catch (error) {
+    console.error('Edit post error:', error);
+    res.status(500).json({ error: 'Failed to edit post' });
+  }
+};
+
 const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -221,5 +248,6 @@ module.exports = {
   createPost,
   getSpacePosts,
   getPost,
+  editPost,
   deletePost
 };

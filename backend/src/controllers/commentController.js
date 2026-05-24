@@ -97,7 +97,7 @@ const getPostComments = async (req, res) => {
         orderBy = { upvotes: 'desc' };
         break;
       case 'controversial':
-        orderBy = { upvotes: { sort: 'desc' }, downvotes: 'desc' };
+        orderBy = [{ upvotes: 'desc' }, { downvotes: 'desc' }];
         break;
       default:
         orderBy = { upvotes: 'desc' };
@@ -173,43 +173,74 @@ const getPostComments = async (req, res) => {
   }
 };
 
-// Vote on comment
+// Vote on comment (idempotent toggle using Vote model)
 const voteComment = async (req, res) => {
   try {
     const { id } = req.params;
     const { voteType } = req.body; // 'up' or 'down'
     const userId = req.user?.userId;
-    
-    if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const comment = await prisma.comment.findUnique({ where: { id } });
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+
+    const voteValue = voteType === 'up' ? 'UPVOTE' : 'DOWNVOTE';
+
+    const existing = await prisma.vote.findUnique({
+      where: { userId_commentId: { userId, commentId: id } }
+    });
+
+    let updateData;
+    let msg;
+
+    if (existing) {
+      await prisma.vote.delete({ where: { id: existing.id } });
+      updateData = existing.type === 'UPVOTE'
+        ? { upvotes: { decrement: 1 } }
+        : { downvotes: { decrement: 1 } };
+      msg = 'Vote removed';
+    } else {
+      await prisma.vote.create({ data: { userId, commentId: id, type: voteValue } });
+      updateData = voteType === 'up'
+        ? { upvotes: { increment: 1 } }
+        : { downvotes: { increment: 1 } };
+      msg = `Comment ${voteType}voted`;
     }
-    
-    const comment = await prisma.comment.findUnique({
-      where: { id }
-    });
-    
-    if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
-    }
-    
-    // Update vote counts
-    const updateData = voteType === 'up' 
-      ? { upvotes: { increment: 1 } }
-      : { downvotes: { increment: 1 } };
-    
-    const updatedComment = await prisma.comment.update({
-      where: { id },
-      data: updateData
-    });
-    
-    res.json({
-      message: `Comment ${voteType}voted`,
-      upvotes: updatedComment.upvotes,
-      downvotes: updatedComment.downvotes
-    });
+
+    const updated = await prisma.comment.update({ where: { id }, data: updateData });
+    res.json({ message: msg, upvotes: updated.upvotes, downvotes: updated.downvotes });
   } catch (error) {
     console.error('Vote comment error:', error);
     res.status(500).json({ error: 'Failed to vote on comment' });
+  }
+};
+
+// Edit comment (15-minute window)
+const editComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user?.userId;
+
+    if (!content?.trim()) return res.status(400).json({ error: 'Content is required' });
+
+    const comment = await prisma.comment.findUnique({ where: { id } });
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    if (comment.authorId !== userId) return res.status(403).json({ error: 'Not your comment' });
+    if (Date.now() - new Date(comment.createdAt).getTime() > 15 * 60 * 1000) {
+      return res.status(403).json({ error: 'Edit window (15 minutes) has passed' });
+    }
+
+    const updated = await prisma.comment.update({
+      where: { id },
+      data: { content: content.trim() }
+    });
+
+    res.json({ message: 'Comment updated', comment: updated });
+  } catch (error) {
+    console.error('Edit comment error:', error);
+    res.status(500).json({ error: 'Failed to edit comment' });
   }
 };
 
@@ -269,5 +300,6 @@ module.exports = {
   createComment,
   getPostComments,
   voteComment,
+  editComment,
   deleteComment
 };

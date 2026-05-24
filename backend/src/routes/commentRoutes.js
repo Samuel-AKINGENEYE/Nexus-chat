@@ -24,6 +24,7 @@ router.get('/post/:postId', commentController.getPostComments);
 // Protected routes
 router.post('/', authenticate, validateCommentCreation, commentController.createComment);
 router.post('/:id/vote', authenticate, commentController.voteComment);
+router.patch('/:id', authenticate, commentController.editComment);
 router.delete('/:id', authenticate, commentController.deleteComment);
 
 module.exports = router;

@@ -47,6 +47,7 @@ const createSpace = async (req, res) => {
         categoryTags: categoryTags || [],
         rules: rules || [],
         createdBy: userId,
+        memberCount: 1,
         members: {
           create: {
             userId,

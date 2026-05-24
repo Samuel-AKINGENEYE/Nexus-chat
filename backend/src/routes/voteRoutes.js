@@ -21,8 +21,9 @@ router.post('/posts/:id/vote', authenticate, async (req, res) => {
     
     if (existingVote) {
       await prisma.vote.delete({ where: { id: existingVote.id } });
-      
-      const updateData = voteType === 'up' 
+
+      // Decrement based on the vote that was cast, not the incoming request type
+      const updateData = existingVote.type === 'UPVOTE'
         ? { upvotes: { decrement: 1 } }
         : { downvotes: { decrement: 1 } };
       await prisma.post.update({ where: { id }, data: updateData });
@@ -32,7 +33,7 @@ router.post('/posts/:id/vote', authenticate, async (req, res) => {
     }
     
     await prisma.vote.create({
-      data: { userId, postId: id, type: voteType.toUpperCase() }
+      data: { userId, postId: id, type: voteType === 'up' ? 'UPVOTE' : 'DOWNVOTE' }
     });
     
     const updateData = voteType === 'up'

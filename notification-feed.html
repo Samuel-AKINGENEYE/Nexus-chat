@@ -1,278 +1,362 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus - Notifications</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            color: #333;
-            font-size: 24px;
-        }
-        
-        .notification-item {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .notification-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-        
-        .notification-item.read {
-            opacity: 0.7;
-            border-left-color: #ccc;
-        }
-        
-        .notification-title {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .notification-body {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .notification-time {
-            color: #999;
-            font-size: 12px;
-        }
-        
-        .unread-badge {
-            background: #667eea;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-        
-        .mark-read-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-size: 14px;
-        }
-        
-        .mark-read-btn:hover {
-            background: #059669;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-        }
-        
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-        }
-        
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        
-        button:hover {
-            background: #5a67d8;
-        }
-        
-        .notification-icon {
-            font-size: 24px;
-            margin-right: 10px;
-        }
-        
-        .notification-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .badge {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus — Notifications</title>
+  <!-- Socket.io client — must match server version -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff;
+      --secondary: #8b5cf6; --success: #10b981; --danger: #ef4444;
+      --bg: #f8fafc; --surface: #ffffff; --surface-2: #f1f5f9;
+      --border: #e2e8f0; --text: #0f172a; --text-muted: #64748b; --text-light: #94a3b8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07); --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 28px rgba(0,0,0,0.12);
+      --radius: 12px; --radius-sm: 8px; --radius-full: 9999px;
+      --header-h: 60px; --transition: 0.18s ease;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a; --surface: #1e293b; --surface-2: #334155; --border: #334155;
+      --text: #f1f5f9; --text-muted: #94a3b8; --text-light: #475569;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.35); --shadow: 0 4px 12px rgba(0,0,0,0.35);
+      --shadow-lg: 0 8px 28px rgba(0,0,0,0.5);
+      --primary-light: rgba(99,102,241,0.2);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; -webkit-font-smoothing:antialiased; }
+    button { font-family:inherit; cursor:pointer; }
+
+    /* Header */
+    .header {
+      position:fixed; top:0; left:0; right:0; height:var(--header-h);
+      background:var(--surface); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 20px; gap:12px;
+      z-index:100; box-shadow:var(--shadow-sm);
+    }
+    .back-btn {
+      width:34px; height:34px; border-radius:var(--radius-full); border:none;
+      background:var(--surface-2); color:var(--text-muted); font-size:16px;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .back-btn:hover { background:var(--primary-light); color:var(--primary); }
+    .page-title { font-size:17px; font-weight:800; color:var(--text); }
+    .header-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .icon-btn {
+      width:34px; height:34px; border-radius:var(--radius-full); border:none;
+      background:var(--surface-2); color:var(--text-muted); font-size:14px;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .icon-btn:hover { background:var(--primary-light); color:var(--primary); }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; gap:5px; padding:8px 16px;
+      border-radius:var(--radius-sm); font-size:13px; font-weight:600;
+      border:none; transition:var(--transition); white-space:nowrap;
+    }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
+    .btn-outline { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+    .btn-outline:hover { background:var(--surface-2); color:var(--text); }
+    .btn-sm { padding:5px 10px; font-size:12px; }
+
+    /* Layout */
+    .page { padding-top:var(--header-h); max-width:680px; margin:0 auto; padding-left:16px; padding-right:16px; padding-bottom:32px; }
+
+    /* Unread counter chip */
+    .count-chip {
+      background:var(--primary-light); color:var(--primary);
+      padding:3px 10px; border-radius:var(--radius-full); font-size:12px; font-weight:700;
+    }
+
+    /* Filter tabs */
+    .filter-tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin:16px 0; }
+    .filter-tab {
+      padding:8px 13px; font-size:13px; font-weight:600; color:var(--text-muted);
+      border:none; background:none; border-bottom:2px solid transparent;
+      margin-bottom:-1px; transition:var(--transition); cursor:pointer;
+    }
+    .filter-tab:hover { color:var(--text); }
+    .filter-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+    /* Notification items */
+    .notif-item {
+      display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+      background:var(--surface); border-radius:var(--radius);
+      border:1px solid var(--border); margin-bottom:8px;
+      cursor:pointer; transition:var(--transition); box-shadow:var(--shadow-sm);
+      border-left:3px solid var(--primary);
+    }
+    .notif-item:hover { box-shadow:var(--shadow); border-color:rgba(99,102,241,.4); transform:translateX(2px); }
+    .notif-item.read { opacity:.65; border-left-color:var(--border); }
+    .notif-item.read:hover { opacity:.9; }
+    .notif-icon {
+      width:38px; height:38px; border-radius:var(--radius-full); flex-shrink:0;
+      background:var(--primary-light); display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+    }
+    .notif-content { flex:1; min-width:0; }
+    .notif-title-row { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
+    .notif-title { font-size:14px; font-weight:700; color:var(--text); }
+    .new-badge {
+      background:var(--primary); color:#fff; padding:1px 7px;
+      border-radius:var(--radius-full); font-size:10px; font-weight:700;
+      flex-shrink:0;
+    }
+    .notif-body { font-size:13px; color:var(--text-muted); margin-bottom:4px; }
+    .notif-time { font-size:11px; color:var(--text-light); }
+
+    /* Skeleton */
+    .skeleton {
+      background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);
+      background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Empty state */
+    .empty { text-align:center; padding:48px 16px; color:var(--text-muted); }
+    .empty-icon { font-size:44px; margin-bottom:10px; }
+    .empty-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:5px; }
+    .empty p { font-size:13px; }
+
+    /* Toast */
+    .toasts { position:fixed; bottom:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+    .toast {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:10px 14px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:500;
+      display:flex; align-items:center; gap:7px; max-width:280px; pointer-events:auto;
+      animation:toastIn .22s ease;
+    }
+    .toast.success { border-left:3px solid var(--success); }
+    .toast.error   { border-left:3px solid var(--danger); }
+    .toast.info    { border-left:3px solid var(--primary); }
+    @keyframes toastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:none} }
+
+    /* Live dot */
+    .live-dot {
+      width:8px; height:8px; border-radius:50%; background:var(--success);
+      display:inline-block; animation:pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+    /* Section header */
+    .section-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 0 8px; flex-wrap:wrap; gap:8px;
+    }
+    .section-header-left { display:flex; align-items:center; gap:10px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="notification-header">
-                <h1>🔔 Notifications</h1>
-                <div>
-                    <span id="unreadCount" class="badge">0</span>
-                    <button onclick="markAllAsRead()">Mark all as read</button>
-                    <button onclick="loadNotifications()">Refresh</button>
-                </div>
-            </div>
-            <div id="notificationList" class="notification-list">
-                <div class="loading">Loading notifications...</div>
-            </div>
-        </div>
-    </div>
+<div class="toasts" id="toasts"></div>
 
-    <script>
-        const API_BASE = 'http://localhost:3001/api';
-        let currentToken = localStorage.getItem('token') || '';
-        
-        // Check if user is logged in
-        if (!currentToken) {
-            window.location.href = '/nexus-web.html';
-        }
-        
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
-            };
-            
-            const response = await fetch(`${API_BASE}${endpoint}`, {
-                method,
-                headers,
-                body: data ? JSON.stringify(data) : undefined
-            });
-            
-            return response.json();
-        }
-        
-        async function loadNotifications() {
-            try {
-                const result = await apiCall('/notifications?limit=50');
-                displayNotifications(result.notifications);
-                
-                // Update unread count
-                const unreadResult = await apiCall('/notifications/unread/count');
-                document.getElementById('unreadCount').innerText = unreadResult.unreadCount;
-            } catch (error) {
-                document.getElementById('notificationList').innerHTML = '<div class="empty">Error loading notifications</div>';
-            }
-        }
-        
-        function displayNotifications(notifications) {
-            const container = document.getElementById('notificationList');
-            
-            if (!notifications || notifications.length === 0) {
-                container.innerHTML = '<div class="empty">No notifications yet</div>';
-                return;
-            }
-            
-            const getIcon = (type) => {
-                const icons = {
-                    'COMMENT_ON_POST': '💬',
-                    'REPLY_TO_COMMENT': '↩️',
-                    'MENTION': '@',
-                    'NEW_DM': '✉️',
-                    'UPVOTE_MILESTONE': '👍',
-                    'NEW_POST_IN_SPACE': '📝',
-                    'MOD_ACTION': '🛡️',
-                    'SPACE_INVITE': '🏠'
-                };
-                return icons[type] || '🔔';
-            };
-            
-            container.innerHTML = notifications.map(notif => `
-                <div class="notification-item ${notif.isRead ? 'read' : ''}" onclick="markAsRead('${notif.id}')">
-                    <div style="display: flex; align-items: flex-start;">
-                        <div class="notification-icon">${getIcon(notif.type)}</div>
-                        <div style="flex: 1;">
-                            <div class="notification-title">
-                                ${notif.title}
-                                ${!notif.isRead ? '<span class="unread-badge">New</span>' : ''}
-                            </div>
-                            <div class="notification-body">${notif.body}</div>
-                            <div class="notification-time">${new Date(notif.createdAt).toLocaleString()}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        async function markAsRead(notificationId) {
-            await apiCall(`/notifications/${notificationId}/read`, 'PUT');
-            loadNotifications();
-        }
-        
-        async function markAllAsRead() {
-            await apiCall('/notifications/read/all', 'PUT');
-            loadNotifications();
-        }
-        
-        // Setup WebSocket for real-time notifications
-        function setupWebSocket() {
-            const ws = new WebSocket('ws://localhost:3001');
-            
-            ws.onopen = () => {
-                console.log('WebSocket connected');
-                ws.send(JSON.stringify({ type: 'auth', token: currentToken }));
-            };
-            
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'notification') {
-                    loadNotifications();
-                }
-            };
-        }
-        
-        // Initial load
-        loadNotifications();
-        setupWebSocket();
-        
-        // Auto-refresh every 30 seconds
-        setInterval(loadNotifications, 30000);
-    </script>
+<header class="header">
+  <button class="back-btn" onclick="history.back()" title="Back">←</button>
+  <div class="page-title">🔔 Notifications</div>
+  <div class="header-right">
+    <span class="count-chip" id="unreadChip" style="display:none">0 unread</span>
+    <span id="liveIndicator" style="display:none;align-items:center;gap:5px;font-size:11px;color:var(--success);font-weight:600;">
+      <span class="live-dot"></span> Live
+    </span>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    <button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark all read</button>
+    <button class="btn btn-outline btn-sm" onclick="loadNotifs()">Refresh</button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Your activity feed</span>
+    </div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-tab" onclick="setFilter('unread', this)">Unread</button>
+    <button class="filter-tab" onclick="setFilter('COMMENT_ON_POST', this)">Comments</button>
+    <button class="filter-tab" onclick="setFilter('MENTION', this)">Mentions</button>
+  </div>
+
+  <div id="notifList"></div>
+</div>
+
+<script>
+  // In production, Vercel proxies /api/* to the Render backend
+  const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const API = IS_LOCAL ? 'http://localhost:3001/api' : '/api';
+  // Socket.io must connect directly to the backend (WebSocket upgrades can't be proxied by Vercel)
+  const SOCKET_HOST = IS_LOCAL ? 'http://localhost:3001' : 'https://nexus-chat-backend.onrender.com';
+  const token = localStorage.getItem('nexus_token') || localStorage.getItem('token') || '';
+  let allNotifs = [];
+  let activeFilter = 'all';
+  let socket = null;
+
+  if (!token) { window.location.href = '/nexus-web.html'; }
+
+  /* ── Utils ── */
+  const $ = id => document.getElementById(id);
+
+  function toast(msg, type = 'info') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
+    $('toasts').appendChild(t);
+    setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3200);
+  }
+
+  function timeAgo(d) {
+    const s = Math.floor((Date.now() - new Date(d)) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+    return new Date(d).toLocaleDateString();
+  }
+
+  function esc(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
+  /* ── Theme ── */
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('nexus_theme', next);
+  }
+  (()=>{
+    const s = localStorage.getItem('nexus_theme');
+    if (s) { document.documentElement.setAttribute('data-theme', s); if (s==='dark') $('themeBtn').textContent='☀️'; }
+  })();
+
+  /* ── API ── */
+  async function api(endpoint, method = 'GET', data = null) {
+    const r = await fetch(`${API}${endpoint}`, {
+      method,
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+      body: data ? JSON.stringify(data) : undefined
+    });
+    return r.json();
+  }
+
+  /* ── Filter ── */
+  function setFilter(f, el) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderNotifs();
+  }
+
+  /* ── Render ── */
+  const ICONS = {
+    COMMENT_ON_POST: '💬', REPLY_TO_COMMENT: '↩️', MENTION: '@️',
+    NEW_DM: '✉️', UPVOTE_MILESTONE: '👍', NEW_POST_IN_SPACE: '📝',
+    MOD_ACTION: '🛡️', SPACE_INVITE: '🏠'
+  };
+
+  function renderNotifs() {
+    const el = $('notifList');
+    let list = allNotifs;
+
+    if (activeFilter === 'unread') list = list.filter(n => !n.isRead);
+    else if (activeFilter !== 'all') list = list.filter(n => n.type === activeFilter);
+
+    if (!list.length) {
+      const msgs = { unread:'You\'re all caught up!', all:'No notifications yet' };
+      el.innerHTML = `<div class="empty"><div class="empty-icon">${activeFilter==='unread'?'✓':'🔔'}</div><div class="empty-title">${msgs[activeFilter]||'Nothing here'}</div><p>Check back later for updates.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = list.map(n => `
+      <div class="notif-item ${n.isRead ? 'read' : ''}" onclick="readNotif('${n.id}')">
+        <div class="notif-icon">${ICONS[n.type] || '🔔'}</div>
+        <div class="notif-content">
+          <div class="notif-title-row">
+            <span class="notif-title">${esc(n.title)}</span>
+            ${!n.isRead ? '<span class="new-badge">New</span>' : ''}
+          </div>
+          <div class="notif-body">${esc(n.body)}</div>
+          <div class="notif-time">${timeAgo(n.createdAt)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function updateUnreadChip() {
+    const unread = allNotifs.filter(n => !n.isRead).length;
+    const chip = $('unreadChip');
+    if (unread > 0) { chip.textContent = `${unread} unread`; chip.style.display = 'inline-block'; }
+    else { chip.style.display = 'none'; }
+  }
+
+  /* ── API actions ── */
+  async function loadNotifs() {
+    $('notifList').innerHTML = `<div class="notif-item skeleton" style="height:72px;border-left:none;cursor:default;"></div>`.repeat(4);
+    try {
+      const r = await api('/notifications?limit=60');
+      allNotifs = r.notifications || [];
+      updateUnreadChip();
+      renderNotifs();
+    } catch {
+      $('notifList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div><p>Could not reach the server.</p></div>`;
+    }
+  }
+
+  async function readNotif(id) {
+    const n = allNotifs.find(x => x.id === id);
+    if (n && !n.isRead) {
+      n.isRead = true;
+      renderNotifs();
+      updateUnreadChip();
+      await api(`/notifications/${id}/read`, 'PUT');
+    }
+  }
+
+  async function markAllRead() {
+    try {
+      await api('/notifications/read/all', 'PUT');
+      allNotifs.forEach(n => n.isRead = true);
+      renderNotifs();
+      updateUnreadChip();
+      toast('All notifications marked as read', 'success');
+    } catch { toast('Failed to mark as read', 'error'); }
+  }
+
+  /* ── Real-time via Socket.io ── */
+  function setupSocket() {
+    try {
+      socket = io(SOCKET_HOST, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 3
+      });
+
+      socket.on('connect', () => {
+        $('liveIndicator').style.display = 'flex';
+      });
+
+      socket.on('disconnect', () => {
+        $('liveIndicator').style.display = 'none';
+      });
+
+      socket.on('connect_error', () => {
+        $('liveIndicator').style.display = 'none';
+      });
+
+      socket.on('notification', (notif) => {
+        allNotifs.unshift(notif);
+        updateUnreadChip();
+        renderNotifs();
+        toast(notif.title || 'New notification', 'info');
+      });
+    } catch (e) {
+      console.warn('Socket.io connection failed:', e.message);
+    }
+  }
+
+  /* ── Init ── */
+  loadNotifs();
+  setupSocket();
+  setInterval(loadNotifs, 30000);
+</script>
 </body>
 </html>

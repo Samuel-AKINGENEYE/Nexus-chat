@@ -8,18 +8,27 @@ class SocketManager {
   constructor(server) {
     this.io = new Server(server, {
       cors: {
-        origin: "http://localhost:3000",
+        origin: [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://127.0.0.1:3001'
+        ],
         credentials: true
       }
     });
-    
-    // Setup Redis adapter for scaling
-    const pubClient = new Redis({
-      host: 'localhost',
-      port: 6380,
-    });
-    const subClient = pubClient.duplicate();
-    this.io.adapter(createAdapter(pubClient, subClient));
+
+    // Redis adapter is optional — only enabled when REDIS_ENABLED=true
+    if (process.env.REDIS_ENABLED === 'true') {
+      const pubClient = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT) || 6380,
+      });
+      const subClient = pubClient.duplicate();
+      pubClient.on('error', (err) => console.error('Redis pub error (scaling disabled):', err.message));
+      subClient.on('error', (err) => console.error('Redis sub error (scaling disabled):', err.message));
+      this.io.adapter(createAdapter(pubClient, subClient));
+      console.log('🔴 Redis adapter enabled');
+    }
     
     this.setupMiddleware();
     this.setupEvents();
@@ -137,19 +146,18 @@ class SocketManager {
       
       // Handle read receipt
       socket.on('mark_read', async ({ messageId, conversationId }) => {
-        await prisma.message.updateMany({
-          where: {
-            id: messageId,
-            conversationId,
-            receiver: { some: { userId: socket.userId } }
-          },
-          data: { status: 'READ' }
-        });
-        
-        socket.to(`conversation:${conversationId}`).emit('message_read', {
-          messageId,
-          userId: socket.userId
-        });
+        try {
+          await prisma.message.update({
+            where: { id: messageId },
+            data: { status: 'READ' }
+          });
+          socket.to(`conversation:${conversationId}`).emit('message_read', {
+            messageId,
+            userId: socket.userId
+          });
+        } catch (err) {
+          console.error('mark_read error:', err);
+        }
       });
       
       // Handle disconnect

@@ -28,6 +28,7 @@ router.get('/:id', postController.getPost);
 
 // Protected routes
 router.post('/', authenticate, validatePostCreation, postController.createPost);
+router.patch('/:id', authenticate, postController.editPost);
 router.delete('/:id', authenticate, postController.deletePost);
 
 module.exports = router;

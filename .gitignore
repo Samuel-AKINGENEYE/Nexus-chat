@@ -1,0 +1,41 @@
+# ── Node ──
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Environment variables ──
+.env
+.env.local
+.env.*.local
+backend/.env
+!.env.example
+
+# ── Logs ──
+*.log
+logs/
+server.log
+
+# ── Build output ──
+dist/
+build/
+.next/
+out/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Vercel ──
+.vercel
+
+# ── Test & debug scripts ──
+backend/test*.js
+backend/test*.sh
+test-commands.sh
+start-servers.sh
+stop-servers.sh
+status.sh

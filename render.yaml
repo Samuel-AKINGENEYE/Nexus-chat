@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: nexus-chat-backend
+    env: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Set DATABASE_URL manually in the Render dashboard after creating a Neon DB
+      - key: DATABASE_URL
+        sync: false
+      # Auto-generated secure secrets
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Set to your Vercel URL after deploying frontend (e.g. https://nexus-chat.vercel.app)
+      - key: FRONTEND_URL
+        sync: false

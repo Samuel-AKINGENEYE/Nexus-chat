@@ -16,10 +16,11 @@ class NotificationService {
       });
       
       // Emit via WebSocket if available
-      const req = require('../server');
-      if (req.io) {
-        req.io.to(`user:${userId}`).emit('notification', notification);
-      }
+      try {
+        const { app } = require('../server');
+        const io = app.get('io');
+        if (io) io.to(`user:${userId}`).emit('notification', notification);
+      } catch (_) { /* io not ready */ }
       
       return notification;
     } catch (error) {
@@ -84,11 +85,12 @@ class NotificationService {
     });
     
     if (post && post.authorId !== authorId) {
+      const commenterName = post.author?.displayName || post.author?.username || 'Someone';
       await this.create(
         post.authorId,
         'COMMENT_ON_POST',
         'New comment on your post',
-        `${authorId} commented on "${post.title.substring(0, 50)}"`,
+        `${commenterName} commented on "${post.title.substring(0, 50)}"`,
         { postId, commentId, authorId }
       );
     }
@@ -102,11 +104,12 @@ class NotificationService {
     });
     
     if (parentComment && parentComment.authorId !== authorId) {
+      const replierName = parentComment.author?.displayName || parentComment.author?.username || 'Someone';
       await this.create(
         parentComment.authorId,
         'REPLY_TO_COMMENT',
         'Someone replied to your comment',
-        `${authorId} replied to your comment`,
+        `${replierName} replied to your comment`,
         { parentCommentId, replyId, authorId }
       );
     }
