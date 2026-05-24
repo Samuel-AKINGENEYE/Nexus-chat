@@ -253,3 +253,66 @@ enum NotificationType {
   MOD_ACTION
   SPACE_INVITE
 }
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  postId      String?
+  commentId   String?
+  reason      String
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  modNotes    String?
+  
+  reporter    User         @relation(fields: [reporterId], references: [id])
+  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  resolver    User?        @relation("ResolvedReports", fields: [resolvedBy], references: [id])
+  
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model ModerationLog {
+  id          String    @id @default(cuid())
+  moderatorId String
+  action      String
+  targetType  String
+  targetId    String
+  reason      String
+  duration    String?
+  createdAt   DateTime  @default(now())
+  spaceId     String?
+  
+  moderator   User      @relation(fields: [moderatorId], references: [id])
+  space       Space?    @relation(fields: [spaceId], references: [id])
+  
+  @@index([moderatorId])
+  @@index([createdAt])
+}
+
+model Ban {
+  id         String    @id @default(cuid())
+  userId     String
+  spaceId    String?
+  reason     String
+  duration   String?   // '1d', '7d', '30d', 'permanent'
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  createdBy  String
+  
+  user       User      @relation(fields: [userId], references: [id])
+  space      Space?    @relation(fields: [spaceId], references: [id])
+  creator    User      @relation("BanCreator", fields: [createdBy], references: [id])
+  
+  @@index([userId])
+  @@index([spaceId])
+}
