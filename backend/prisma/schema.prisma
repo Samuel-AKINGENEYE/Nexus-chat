@@ -28,6 +28,7 @@ model User {
   conversations ConversationParticipant[]
   sentMessages  Message[] @relation("SentMessages")
   votes         Vote[]
+  notifications Notification[]
 }
 
 model Session {
@@ -221,4 +222,34 @@ enum MsgStatus {
   SENT
   DELIVERED
   READ
+}
+
+model Notification {
+  id          String         @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  body        String
+  data        Json?
+  isRead      Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  deliveredAt DateTime?
+  
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([type])
+}
+
+enum NotificationType {
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
+  MENTION
+  NEW_DM
+  UPVOTE_MILESTONE
+  NEW_POST_IN_SPACE
+  MOD_ACTION
+  SPACE_INVITE
 }
