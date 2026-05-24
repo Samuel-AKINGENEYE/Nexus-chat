@@ -25,6 +25,9 @@ model User {
   sessions      Session[]
   ownedSpaces   Space[]   @relation("SpaceCreator")
   spaceMembers  SpaceMember[]
+  conversations ConversationParticipant[]
+  sentMessages  Message[] @relation("SentMessages")
+  votes         Vote[]
 }
 
 model Session {
@@ -106,6 +109,7 @@ model Post {
   author       User      @relation(fields: [authorId], references: [id])
   space        Space     @relation(fields: [spaceId], references: [id])
   comments     Comment[]
+  votes        Vote[]
 }
 
 enum PostType {
@@ -132,9 +136,89 @@ model Comment {
   post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parent     Comment?  @relation("CommentTree", fields: [parentId], references: [id])
   replies    Comment[] @relation("CommentTree")
+  votes      Vote[]
   
   @@index([postId])
   @@index([parentId])
   @@index([createdAt])
   @@index([depth])
+}
+
+model Vote {
+  id        String    @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  type      VoteType  @default(UPVOTE)
+  createdAt DateTime  @default(now())
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment   Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([postId])
+  @@index([commentId])
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+model Conversation {
+  id           String    @id @default(cuid())
+  type         ConvType  @default(ONE_ON_ONE)
+  name         String?
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  messages     Message[]
+  participants ConversationParticipant[]
+}
+
+enum ConvType {
+  ONE_ON_ONE
+  GROUP
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime  @default(now())
+  lastReadAt     DateTime  @default(now())
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?
+  mediaUrl       String?
+  status         MsgStatus @default(SENT)
+  replyToId      String?
+  createdAt      DateTime  @default(now())
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  deletedFor     String[]
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  replyTo        Message?     @relation("MessageReply", fields: [replyToId], references: [id])
+  replies        Message[]    @relation("MessageReply")
+}
+
+enum MsgStatus {
+  SENT
+  DELIVERED
+  READ
 }
