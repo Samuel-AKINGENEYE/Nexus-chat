@@ -24,3 +24,9 @@ services:
       # Set to your Vercel URL after deploying frontend (e.g. https://nexus-chat.vercel.app)
       - key: FRONTEND_URL
         sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dtswzyqks
+      - key: CLOUDINARY_API_KEY
+        value: "317365611868682"
+      - key: CLOUDINARY_API_SECRET
+        sync: false

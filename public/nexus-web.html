@@ -4,357 +4,217 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nexus — Community Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236366f1'/><stop offset='100%25' stop-color='%238b5cf6'/></linearGradient></defs><polygon points='50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5' fill='url(%23g)'/><text x='50' y='67' text-anchor='middle' font-size='44' font-weight='bold' fill='white' font-family='system-ui'>N</text></svg>">
   <style>
-    /* ── Design tokens ── */
     :root {
-      --primary: #6366f1;
-      --primary-dark: #4f46e5;
-      --primary-light: #e0e7ff;
-      --secondary: #8b5cf6;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --surface-2: #f1f5f9;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --text-light: #94a3b8;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
-      --shadow: 0 4px 12px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 28px rgba(0,0,0,0.12);
-      --radius: 12px;
-      --radius-sm: 8px;
-      --radius-full: 9999px;
-      --sidebar-w: 240px;
-      --header-h: 60px;
-      --transition: 0.18s ease;
+      --primary:#6366f1; --primary-dark:#4f46e5; --primary-light:#eef2ff;
+      --secondary:#8b5cf6; --success:#10b981; --danger:#ef4444; --warning:#f59e0b;
+      --bg:#f1f5f9; --surface:#ffffff; --surface-2:#f8fafc; --border:#e2e8f0;
+      --text:#0f172a; --text-muted:#64748b; --text-light:#94a3b8;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow:0 4px 16px rgba(0,0,0,.08); --shadow-lg:0 10px 40px rgba(0,0,0,.12);
+      --radius:14px; --radius-sm:8px; --radius-full:9999px;
+      --sidebar-w:248px; --header-h:58px; --t:.15s ease;
     }
     [data-theme="dark"] {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
-      --border: #334155;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-light: #475569;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
-      --shadow: 0 4px 12px rgba(0,0,0,0.35);
-      --shadow-lg: 0 8px 28px rgba(0,0,0,0.5);
-      --primary-light: rgba(99,102,241,0.2);
+      --bg:#0f172a; --surface:#1e293b; --surface-2:#263044; --border:#334155;
+      --text:#f1f5f9; --text-muted:#94a3b8; --text-light:#475569;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.4); --shadow:0 4px 16px rgba(0,0,0,.4);
+      --shadow-lg:0 10px 40px rgba(0,0,0,.6); --primary-light:rgba(99,102,241,.15);
     }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;}
+    a{color:inherit;text-decoration:none;} button{font-family:inherit;cursor:pointer;} img{max-width:100%;height:auto;display:block;}
 
-    /* ── Reset ── */
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
-      background: var(--bg); color: var(--text);
-      line-height: 1.5; -webkit-font-smoothing: antialiased;
-    }
-    a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; cursor: pointer; }
+    /* Header */
+    .header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:100;box-shadow:var(--shadow-sm);}
+    .logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;white-space:nowrap;flex-shrink:0;}
+    .logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:900;}
+    .logo-text{background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .search-wrap{flex:1;max-width:400px;position:relative;}
+    .search-wrap input{width:100%;padding:8px 14px 8px 38px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--radius-full);font-size:13px;color:var(--text);outline:none;transition:var(--t);}
+    .search-wrap input:focus{border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:13px;pointer-events:none;}
+    .header-right{display:flex;align-items:center;gap:6px;margin-left:auto;}
+    .icon-btn{width:36px;height:36px;border-radius:var(--radius-full);border:none;background:var(--surface-2);color:var(--text-muted);font-size:16px;display:flex;align-items:center;justify-content:center;position:relative;transition:var(--t);}
+    .icon-btn:hover{background:var(--primary-light);color:var(--primary);}
+    .notif-badge{position:absolute;top:-3px;right:-3px;background:var(--danger);color:#fff;border-radius:var(--radius-full);font-size:9px;font-weight:700;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--surface);}
+    .hamburger{display:none;}
+    @media(max-width:768px){.hamburger{display:flex;}.search-wrap{display:none;}}
 
-    /* ── Header ── */
-    .header {
-      position: fixed; top:0; left:0; right:0; height: var(--header-h);
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 16px; gap: 12px;
-      z-index: 100; box-shadow: var(--shadow-sm);
-    }
-    .logo {
-      font-size: 19px; font-weight: 800; white-space: nowrap;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .search-wrap { flex:1; max-width: 380px; position: relative; }
-    .search-wrap input {
-      width: 100%; padding: 8px 14px 8px 38px;
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: var(--radius-full); font-size: 13px; color: var(--text); outline: none;
-      transition: var(--transition);
-    }
-    .search-wrap input:focus { border-color: var(--primary); background: var(--surface); }
-    .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color: var(--text-light); font-size:13px; pointer-events:none; }
-    .header-right { display:flex; align-items:center; gap:6px; margin-left:auto; }
-    .icon-btn {
-      width:34px; height:34px; border-radius:var(--radius-full); border:none;
-      background: var(--surface-2); color: var(--text-muted); font-size:15px;
-      display:flex; align-items:center; justify-content:center; position:relative;
-      transition: var(--transition);
-    }
-    .icon-btn:hover { background: var(--primary-light); color: var(--primary); }
-    .notif-badge {
-      position:absolute; top:-2px; right:-2px; background: var(--danger);
-      color:#fff; border-radius:var(--radius-full); font-size:9px; font-weight:700;
-      min-width:15px; height:15px; display:none; align-items:center; justify-content:center;
-      padding:0 3px; border:2px solid var(--surface);
-    }
-    .hamburger { display:none; }
-    @media(max-width:768px) { .hamburger { display:flex; } .search-wrap { display:none; } }
+    /* Layout */
+    .layout{display:flex;padding-top:var(--header-h);min-height:100vh;}
 
-    /* ── Layout ── */
-    .layout { display:flex; padding-top: var(--header-h); min-height:100vh; }
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:var(--header-h);bottom:0;overflow-y:auto;padding:14px 10px;z-index:90;transition:transform var(--t);}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:89;}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.sidebar-overlay.open{display:block;}.main{margin-left:0!important;}}
+    .nav-section{margin-bottom:20px;}
+    .nav-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);padding:0 10px;margin-bottom:4px;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:500;color:var(--text-muted);transition:var(--t);border:none;background:none;width:100%;text-align:left;}
+    .nav-item:hover{background:var(--surface-2);color:var(--text);}
+    .nav-item.active{background:var(--primary-light);color:var(--primary);font-weight:600;}
+    .nav-icon{font-size:16px;width:20px;text-align:center;}
+    .space-pill{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12.5px;color:var(--text-muted);border-radius:var(--radius-sm);cursor:pointer;transition:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .space-pill:hover{background:var(--surface-2);color:var(--text);}
+    .space-pill-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));flex-shrink:0;}
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: var(--sidebar-w); background: var(--surface);
-      border-right: 1px solid var(--border); position:fixed;
-      top: var(--header-h); bottom:0; overflow-y:auto;
-      padding: 12px 10px; z-index:90; transition: transform var(--transition);
-    }
-    .sidebar-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:89;
-    }
-    @media(max-width:768px) {
-      .sidebar { transform:translateX(-100%); }
-      .sidebar.open { transform:translateX(0); }
-      .sidebar-overlay.open { display:block; }
-      .main { margin-left:0 !important; }
-    }
-    .nav-section { margin-bottom:20px; }
-    .nav-label {
-      font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
-      color: var(--text-light); padding:0 8px; margin-bottom:2px;
-    }
-    .nav-item {
-      display:flex; align-items:center; gap:9px; padding:8px 10px;
-      border-radius: var(--radius-sm); font-size:13px; font-weight:500;
-      color: var(--text-muted); transition: var(--transition);
-      border:none; background:none; width:100%; text-align:left;
-    }
-    .nav-item:hover { background: var(--surface-2); color: var(--text); }
-    .nav-item.active { background: var(--primary-light); color: var(--primary); }
-    .nav-dot { width:7px; height:7px; border-radius:50%; background: var(--primary); flex-shrink:0; }
-    .space-nav-item {
-      display:flex; align-items:center; gap:8px; padding:6px 10px;
-      font-size:12.5px; color: var(--text-muted); border-radius: var(--radius-sm);
-      cursor:pointer; transition: var(--transition); white-space:nowrap; overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .space-nav-item:hover { background: var(--surface-2); color: var(--text); }
+    /* Main */
+    .main{flex:1;margin-left:var(--sidebar-w);padding:24px 20px;max-width:820px;}
+    @media(max-width:1100px){.main{max-width:100%;}}
 
-    /* ── Main ── */
-    .main { flex:1; margin-left: var(--sidebar-w); padding:22px 20px; max-width:840px; }
-    @media(max-width:1100px) { .main { max-width:100%; } }
+    /* Card */
+    .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+    .card-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 
-    /* ── Cards ── */
-    .card {
-      background: var(--surface); border-radius: var(--radius);
-      border:1px solid var(--border); padding:18px; margin-bottom:14px;
-      box-shadow: var(--shadow-sm);
-    }
-    .card-title { font-size:15px; font-weight:700; color: var(--text); margin-bottom:14px; display:flex; align-items:center; gap:7px; }
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;border:none;transition:var(--t);white-space:nowrap;}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 16px rgba(99,102,241,.35);}
+    .btn-primary:active{transform:translateY(0);}
+    .btn-outline{background:transparent;color:var(--text-muted);border:1.5px solid var(--border);}
+    .btn-outline:hover{background:var(--surface-2);color:var(--text);border-color:var(--text-muted);}
+    .btn-sm{padding:6px 13px;font-size:12px;}
 
-    /* ── Buttons ── */
-    .btn {
-      display:inline-flex; align-items:center; gap:6px; padding:9px 18px;
-      border-radius: var(--radius-sm); font-size:13px; font-weight:600;
-      border:none; transition: var(--transition); white-space:nowrap;
-    }
-    .btn-primary { background: var(--primary); color:#fff; }
-    .btn-primary:hover { background: var(--primary-dark); transform:translateY(-1px); box-shadow:0 4px 14px rgba(99,102,241,.35); }
-    .btn-outline { background:transparent; color: var(--text-muted); border:1px solid var(--border); }
-    .btn-outline:hover { background: var(--surface-2); color: var(--text); }
-    .btn-danger { background: var(--danger); color:#fff; }
-    .btn-success { background: var(--success); color:#fff; }
-    .btn-sm { padding:6px 12px; font-size:12px; }
+    /* Forms */
+    .form-group{margin-bottom:12px;}
+    .form-label{display:block;font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+    .form-control{width:100%;padding:10px 13px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13.5px;color:var(--text);outline:none;transition:var(--t);font-family:inherit;}
+    .form-control:focus{border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+    textarea.form-control{resize:vertical;min-height:80px;}
+    select.form-control{cursor:pointer;}
+    .form-hint{font-size:11px;color:var(--text-light);margin-top:4px;}
 
-    /* ── Form controls ── */
-    .form-group { margin-bottom:11px; }
-    .form-label { display:block; font-size:12px; font-weight:600; color: var(--text-muted); margin-bottom:5px; }
-    .form-control {
-      width:100%; padding:9px 13px;
-      background: var(--surface-2); border:1px solid var(--border);
-      border-radius: var(--radius-sm); font-size:13px; color: var(--text);
-      outline:none; transition: var(--transition); font-family:inherit;
-    }
-    .form-control:focus {
-      border-color: var(--primary); background: var(--surface);
-      box-shadow:0 0 0 3px rgba(99,102,241,.12);
-    }
-    textarea.form-control { resize:vertical; min-height:72px; }
-    select.form-control { cursor:pointer; }
+    /* Feed tabs */
+    .feed-tabs{display:flex;gap:2px;border-bottom:1.5px solid var(--border);margin-bottom:16px;}
+    .feed-tab{padding:9px 16px;font-size:13px;font-weight:600;color:var(--text-muted);border:none;background:none;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:var(--t);cursor:pointer;}
+    .feed-tab:hover{color:var(--text);}
+    .feed-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
 
-    /* ── Feed tabs ── */
-    .feed-tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:16px; }
-    .feed-tab {
-      padding:9px 14px; font-size:13px; font-weight:600; color: var(--text-muted);
-      border:none; background:none; border-bottom:2px solid transparent;
-      margin-bottom:-1px; transition: var(--transition); cursor:pointer;
-    }
-    .feed-tab:hover { color: var(--text); }
-    .feed-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    /* Post cards */
+    .post-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;transition:var(--t);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;}
+    .post-card:hover{box-shadow:var(--shadow);border-color:rgba(99,102,241,.3);}
+    .vote-col{width:46px;min-width:46px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:3px;border-right:1px solid var(--border);}
+    .vote-btn{width:28px;height:28px;border-radius:6px;border:none;background:none;color:var(--text-light);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--t);}
+    .vote-btn.up:hover{background:rgba(99,102,241,.15);color:var(--primary);}
+    .vote-btn.down:hover{background:rgba(239,68,68,.12);color:var(--danger);}
+    .vote-score{font-size:12px;font-weight:700;color:var(--text-muted);}
+    .post-body-col{flex:1;padding:14px 16px;min-width:0;}
+    .post-meta{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap;}
+    .post-space-tag{background:var(--primary-light);color:var(--primary);padding:2px 9px;border-radius:var(--radius-full);font-size:11px;font-weight:700;cursor:pointer;transition:var(--t);}
+    .post-space-tag:hover{background:var(--primary);color:#fff;}
+    .post-author{font-size:12px;color:var(--text-muted);}
+    .post-author strong{color:var(--text);font-weight:600;}
+    .post-time{font-size:11px;color:var(--text-light);margin-left:auto;}
+    .post-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4;}
+    .post-text{font-size:13px;color:var(--text-muted);margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;}
+    .post-image{width:100%;max-height:320px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:10px;cursor:zoom-in;}
+    .post-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+    .action-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius-full);border:none;background:none;color:var(--text-muted);font-size:12px;font-weight:600;transition:var(--t);cursor:pointer;}
+    .action-btn:hover{background:var(--primary-light);color:var(--primary);}
 
-    /* ── Post cards ── */
-    .post-card {
-      background: var(--surface); border-radius: var(--radius);
-      border:1px solid var(--border); padding:14px 16px; margin-bottom:10px;
-      transition: var(--transition); box-shadow: var(--shadow-sm);
-    }
-    .post-card:hover { box-shadow: var(--shadow); border-color: rgba(99,102,241,.4); }
-    .post-meta { display:flex; align-items:center; gap:7px; margin-bottom:8px; flex-wrap:wrap; }
-    .post-space-tag {
-      background: var(--primary-light); color: var(--primary);
-      padding:2px 9px; border-radius: var(--radius-full); font-size:11px; font-weight:700;
-      cursor:pointer; transition: var(--transition);
-    }
-    .post-space-tag:hover { background: var(--primary); color:#fff; }
-    .post-author { font-size:12px; color: var(--text-muted); }
-    .post-time { font-size:11px; color: var(--text-light); margin-left:auto; }
-    .post-title { font-size:15px; font-weight:700; color: var(--text); margin-bottom:6px; line-height:1.4; }
-    .post-body {
-      font-size:13px; color: var(--text-muted); margin-bottom:10px;
-      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
-    }
-    .post-actions { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .action-btn {
-      display:flex; align-items:center; gap:4px; padding:5px 10px;
-      border-radius: var(--radius-full); border:1px solid var(--border);
-      background: var(--surface-2); color: var(--text-muted);
-      font-size:12px; font-weight:600; transition: var(--transition); cursor:pointer;
-    }
-    .action-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-    .action-btn.down:hover { background:#fee2e2; border-color: var(--danger); color: var(--danger); }
-    .post-id-tag { font-size:11px; color: var(--text-light); font-family:monospace; margin-left:auto; }
+    /* Space grid */
+    .space-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;}
+    .space-card{background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;cursor:pointer;transition:var(--t);}
+    .space-card:hover{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.08);}
+    .space-card-icon{font-size:26px;margin-bottom:8px;}
+    .space-card-name{font-weight:700;font-size:13.5px;color:var(--text);margin-bottom:3px;}
+    .space-card-slug{font-size:11px;color:var(--text-muted);}
+    .space-card-meta{font-size:11px;color:var(--text-light);margin-top:6px;}
 
-    /* ── Space grid ── */
-    .space-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; }
-    .space-card {
-      background: var(--surface-2); border:1px solid var(--border);
-      border-radius: var(--radius-sm); padding:14px; cursor:pointer; transition: var(--transition);
-    }
-    .space-card:hover { background: var(--primary-light); border-color: var(--primary); }
-    .space-card-name { font-weight:700; font-size:13px; color: var(--text); margin-bottom:3px; }
-    .space-card-slug { font-size:11px; color: var(--text-muted); }
-    .space-card-meta { font-size:11px; color: var(--text-light); margin-top:6px; }
+    /* Comments */
+    .comment-item{background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
+    .comment-author{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+    .comment-time{font-size:11px;color:var(--text-light);font-weight:400;}
+    .comment-body{font-size:13.5px;color:var(--text-muted);line-height:1.5;}
+    .replies-wrap{margin-top:10px;padding-left:14px;border-left:2px solid var(--border);}
 
-    /* ── Comment items ── */
-    .comment-item { background: var(--surface-2); border-radius: var(--radius-sm); padding:10px 12px; margin-bottom:8px; }
-    .comment-author { font-size:12px; font-weight:700; color: var(--text); margin-bottom:3px; }
-    .comment-time { font-size:11px; color: var(--text-light); margin-left:6px; font-weight:400; }
-    .comment-body { font-size:13px; color: var(--text-muted); }
-    .replies-wrap { margin-top:8px; padding-left:14px; border-left:2px solid var(--border); }
+    /* Modals */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+    .overlay.open{display:flex;animation:fadeIn .15s ease;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal{background:var(--surface);border-radius:18px;padding:26px;width:100%;max-width:440px;box-shadow:var(--shadow-lg);animation:modalIn .18s ease;}
+    .modal-lg{max-width:560px;}
+    .modal-scroll{max-height:85vh;display:flex;flex-direction:column;}
+    .modal-scroll .modal-body{overflow-y:auto;flex:1;}
+    @keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(-10px)}to{opacity:1;transform:none}}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .modal-title{font-size:18px;font-weight:800;color:var(--text);}
+    .modal-close{width:32px;height:32px;border-radius:var(--radius-full);border:none;background:var(--surface-2);color:var(--text-muted);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--t);}
+    .modal-close:hover{background:var(--border);color:var(--text);}
 
-    /* ── Modals ── */
-    .overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
-      z-index:200; align-items:center; justify-content:center; padding:16px;
-      backdrop-filter:blur(3px);
-    }
-    .overlay.open { display:flex; }
-    .modal {
-      background: var(--surface); border-radius:16px; padding:24px;
-      width:100%; max-width:430px; box-shadow: var(--shadow-lg);
-      animation:modalIn .18s ease;
-    }
-    .modal-lg { max-width:560px; }
-    .modal-scroll { max-height:80vh; display:flex; flex-direction:column; }
-    .modal-scroll .modal-body { overflow-y:auto; flex:1; }
-    @keyframes modalIn { from{opacity:0;transform:scale(.95) translateY(-8px)} to{opacity:1;transform:none} }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-    .modal-title { font-size:18px; font-weight:800; color: var(--text); }
-    .modal-close {
-      width:30px; height:30px; border-radius:var(--radius-full); border:none;
-      background: var(--surface-2); color: var(--text-muted); font-size:14px;
-      display:flex; align-items:center; justify-content:center; cursor:pointer;
-      transition: var(--transition);
-    }
-    .modal-close:hover { background: var(--border); }
+    /* Auth */
+    .auth-tabs{display:flex;background:var(--surface-2);border-radius:10px;padding:4px;margin-bottom:20px;}
+    .auth-tab{flex:1;padding:8px;border-radius:7px;border:none;background:none;font-size:13.5px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:var(--t);}
+    .auth-tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm);}
+    .no-verify-badge{display:inline-flex;align-items:center;gap:5px;background:#ecfdf5;color:#065f46;border-radius:var(--radius-full);padding:5px 12px;font-size:11.5px;font-weight:600;margin-bottom:14px;border:1px solid #a7f3d0;}
 
-    /* ── Auth tabs ── */
-    .auth-tabs { display:flex; background: var(--surface-2); border-radius: var(--radius-sm); padding:3px; margin-bottom:18px; }
-    .auth-tab {
-      flex:1; padding:7px; border-radius:6px; border:none; background:none;
-      font-size:13px; font-weight:600; color: var(--text-muted); cursor:pointer;
-      transition: var(--transition);
-    }
-    .auth-tab.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
+    /* Auth prompt */
+    .auth-prompt{text-align:center;padding:52px 20px;}
+    .auth-prompt-icon{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 18px;color:#fff;font-weight:900;}
+    .auth-prompt h2{font-size:24px;font-weight:800;margin-bottom:8px;}
+    .auth-prompt p{font-size:14px;color:var(--text-muted);margin-bottom:24px;max-width:360px;margin-left:auto;margin-right:auto;}
+    .auth-prompt-btns{display:flex;gap:10px;justify-content:center;}
 
-    /* ── Auth prompt (logged out home) ── */
-    .auth-prompt { text-align:center; padding:56px 20px; }
-    .auth-prompt-icon { font-size:52px; margin-bottom:14px; }
-    .auth-prompt h2 { font-size:22px; font-weight:800; color: var(--text); margin-bottom:8px; }
-    .auth-prompt p { font-size:14px; color: var(--text-muted); margin-bottom:22px; max-width:340px; margin-left:auto; margin-right:auto; }
-    .auth-prompt-btns { display:flex; gap:10px; justify-content:center; }
+    /* User chip */
+    .user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;transition:var(--t);}
+    .user-chip:hover{background:var(--border);}
+    .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;flex-shrink:0;}
+    .avatar-img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+    .user-chip-name{font-size:12.5px;font-weight:600;color:var(--text);}
 
-    /* ── User chip in header ── */
-    .user-chip {
-      display:flex; align-items:center; gap:7px; padding:5px 11px 5px 5px;
-      background: var(--surface-2); border:1px solid var(--border);
-      border-radius:var(--radius-full); cursor:pointer; transition: var(--transition);
-    }
-    .user-chip:hover { background: var(--border); }
-    .avatar {
-      width:26px; height:26px; border-radius:50%;
-      background:linear-gradient(135deg, var(--primary), var(--secondary));
-      display:flex; align-items:center; justify-content:center;
-      color:#fff; font-weight:700; font-size:11px; flex-shrink:0;
-    }
-    .user-chip-name { font-size:12px; font-weight:600; color: var(--text); }
+    /* Create bar */
+    .create-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+    .create-bar-input{flex:1;padding:10px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-full);font-size:13.5px;color:var(--text-muted);outline:none;cursor:pointer;transition:var(--t);}
+    .create-bar-input:hover{border-color:var(--primary);color:var(--text);}
 
-    /* ── Page sections ── */
-    .page { display:none; }
-    .page.active { display:block; }
+    /* Upload area */
+    .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:20px;text-align:center;cursor:pointer;transition:var(--t);color:var(--text-muted);font-size:13px;margin-bottom:12px;}
+    .upload-area:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+    .upload-area.has-image{border-style:solid;border-color:var(--success);padding:8px;background:none;}
+    .upload-preview{width:100%;max-height:200px;object-fit:cover;border-radius:6px;display:none;}
+    .upload-area.has-image .upload-preview{display:block;}
+    .upload-area.has-image .upload-placeholder{display:none;}
+    .upload-area.uploading .upload-placeholder{opacity:.4;}
 
-    /* ── Create bar ── */
-    .create-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-    .create-bar-input {
-      flex:1; padding:9px 14px; background: var(--surface-2);
-      border:1px solid var(--border); border-radius: var(--radius-full);
-      font-size:13px; color: var(--text); outline:none; cursor:pointer;
-      transition: var(--transition);
-    }
-    .create-bar-input:hover { border-color: var(--primary); }
+    /* Feed label */
+    .feed-label{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:12px;color:var(--primary);font-weight:600;margin-bottom:12px;}
+    .feed-label button{background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;margin-left:auto;opacity:.7;}
+    .feed-label button:hover{opacity:1;}
 
-    /* ── Toast ── */
-    .toasts { position:fixed; bottom:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-    .toast {
-      background: var(--surface); border:1px solid var(--border); border-radius:10px;
-      padding:11px 15px; box-shadow: var(--shadow-lg); font-size:13px; font-weight:500;
-      display:flex; align-items:center; gap:8px; max-width:300px; pointer-events:auto;
-      animation:toastIn .25s ease;
-    }
-    .toast.success { border-left:3px solid var(--success); }
-    .toast.error   { border-left:3px solid var(--danger); }
-    .toast.info    { border-left:3px solid var(--primary); }
-    @keyframes toastIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
+    /* Server wake banner */
+    .server-wake{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fbbf24;border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#92400e;margin-bottom:14px;}
 
-    /* ── Skeleton loading ── */
-    .skeleton {
-      background:linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
-      background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius: var(--radius-sm);
-    }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    /* Pages */
+    .page{display:none;} .page.active{display:block;}
 
-    /* ── Empty state ── */
-    .empty { text-align:center; padding:40px 20px; color: var(--text-muted); }
-    .empty-icon { font-size:40px; margin-bottom:10px; }
-    .empty-title { font-size:15px; font-weight:700; color: var(--text); margin-bottom:5px; }
-    .empty p { font-size:13px; margin-bottom:14px; }
+    /* Toasts */
+    .toasts{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+    .toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;max-width:320px;pointer-events:auto;animation:toastIn .25s ease;}
+    .toast.success{border-left:3px solid var(--success);}
+    .toast.error{border-left:3px solid var(--danger);}
+    .toast.info{border-left:3px solid var(--primary);}
+    @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
 
-    /* ── Debug panel ── */
-    .debug-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
-    .debug-toggle span:first-child { font-size:12px; font-weight:600; color: var(--text-muted); }
-    .debug-chevron { font-size:10px; color: var(--text-light); transition: transform .2s; }
-    .debug-chevron.open { transform:rotate(180deg); }
-    .debug-body { display:none; margin-top:10px; }
-    .debug-pre {
-      background:#0f172a; color:#94a3b8; border-radius: var(--radius-sm);
-      padding:12px; font-family:'Courier New',monospace; font-size:11px;
-      overflow-x:auto; max-height:180px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;
-    }
+    /* Skeleton */
+    .skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius-sm);}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-    /* ── Divider ── */
-    .divider { height:1px; background: var(--border); margin:14px 0; }
+    /* Empty */
+    .empty{text-align:center;padding:48px 20px;color:var(--text-muted);}
+    .empty-icon{font-size:48px;margin-bottom:12px;}
+    .empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .empty p{font-size:13px;margin-bottom:16px;max-width:280px;margin-left:auto;margin-right:auto;}
+
+    .divider{height:1px;background:var(--border);margin:16px 0;}
   </style>
 </head>
 <body>
 
-<!-- ── Toasts ── -->
 <div class="toasts" id="toasts"></div>
 
-<!-- ── Auth Modal ── -->
+<!-- Auth Modal -->
 <div class="overlay" id="authOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -362,10 +222,9 @@
       <button class="modal-close" onclick="closeModal('authOverlay')">✕</button>
     </div>
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin"  onclick="switchAuth('login')">Sign In</button>
-      <button class="auth-tab"        id="tabReg"    onclick="switchAuth('register')">Create Account</button>
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuth('login')">Sign In</button>
+      <button class="auth-tab" id="tabReg" onclick="switchAuth('register')">Create Account</button>
     </div>
-    <!-- Login -->
     <div id="formLogin">
       <div class="form-group">
         <label class="form-label">Email</label>
@@ -375,16 +234,17 @@
         <label class="form-label">Password</label>
         <input class="form-control" id="loginPw" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:2px;" onclick="doLogin()">Sign In</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="doLogin()" id="loginBtn">Sign In</button>
+      <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:12px;">No account? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--primary);font-weight:600;">Join free</a></p>
     </div>
-    <!-- Register -->
     <div id="formReg" style="display:none">
+      <div class="no-verify-badge">✓ No email verification — join instantly</div>
       <div class="form-group">
         <label class="form-label">Username</label>
-        <input class="form-control" id="regUser" type="text" placeholder="cooluser" autocomplete="username">
+        <input class="form-control" id="regUser" type="text" placeholder="cooluser123" autocomplete="username">
       </div>
       <div class="form-group">
-        <label class="form-label">Display Name</label>
+        <label class="form-label">Display Name <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-light)">(optional)</span></label>
         <input class="form-control" id="regName" type="text" placeholder="Cool User" autocomplete="name">
       </div>
       <div class="form-group">
@@ -394,17 +254,19 @@
       <div class="form-group">
         <label class="form-label">Password</label>
         <input class="form-control" id="regPw" type="password" placeholder="Min 8 characters" autocomplete="new-password">
+        <div class="form-hint">At least 8 characters</div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:2px;" onclick="doRegister()">Create Account</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="doRegister()" id="regBtn">Create Account — It's Free</button>
+      <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:12px;">Already a member? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--primary);font-weight:600;">Sign in</a></p>
     </div>
   </div>
 </div>
 
-<!-- ── Create Space Modal ── -->
+<!-- Create Space Modal -->
 <div class="overlay" id="spaceOverlay">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Create a Space</div>
+      <div class="modal-title">🌍 Create a Space</div>
       <button class="modal-close" onclick="closeModal('spaceOverlay')">✕</button>
     </div>
     <div class="form-group">
@@ -412,33 +274,33 @@
       <input class="form-control" id="sName" placeholder="My Awesome Community">
     </div>
     <div class="form-group">
-      <label class="form-label">Description</label>
+      <label class="form-label">Description <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-light)">(optional)</span></label>
       <textarea class="form-control" id="sDesc" rows="2" placeholder="What is this space about?"></textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Visibility</label>
       <select class="form-control" id="sVis">
-        <option value="PUBLIC">🌐 Public</option>
-        <option value="RESTRICTED">🔒 Restricted (approval required)</option>
+        <option value="PUBLIC">🌐 Public — anyone can see &amp; post</option>
+        <option value="RESTRICTED">🔒 Restricted — approval required</option>
       </select>
     </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeModal('spaceOverlay')">Cancel</button>
       <button class="btn btn-primary" onclick="doCreateSpace()">Create Space</button>
     </div>
   </div>
 </div>
 
-<!-- ── Create Post Modal ── -->
+<!-- Create Post Modal -->
 <div class="overlay" id="postOverlay">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <div class="modal-title">Create Post</div>
-      <button class="modal-close" onclick="closeModal('postOverlay')">✕</button>
+      <div class="modal-title">✏️ Create Post</div>
+      <button class="modal-close" onclick="cancelPost()">✕</button>
     </div>
     <div class="form-group">
       <label class="form-label">Space</label>
-      <input class="form-control" id="pSpace" placeholder="space-slug" list="spaceList">
+      <input class="form-control" id="pSpace" placeholder="Select a space..." list="spaceList">
       <datalist id="spaceList"></datalist>
     </div>
     <div class="form-group">
@@ -446,40 +308,59 @@
       <input class="form-control" id="pTitle" placeholder="What's on your mind?">
     </div>
     <div class="form-group">
-      <label class="form-label">Content <span style="color:var(--text-light)">(optional)</span></label>
-      <textarea class="form-control" id="pBody" rows="4" placeholder="Add details..."></textarea>
+      <label class="form-label">Content <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-light)">(optional)</span></label>
+      <textarea class="form-control" id="pBody" rows="4" placeholder="Share more details..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Image <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-light)">(optional)</span></label>
+      <div class="upload-area" id="uploadArea" onclick="$('imageInput').click()">
+        <div class="upload-placeholder">
+          <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+          <div style="font-weight:600;margin-bottom:3px;">Click to add an image</div>
+          <div style="font-size:11px;color:var(--text-light);">JPG, PNG, GIF, WebP · max 10MB</div>
+        </div>
+        <img class="upload-preview" id="uploadPreview" alt="Preview">
+      </div>
+      <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="onImageSelected(this)">
+      <input type="hidden" id="pImageUrl">
+      <div id="uploadStatus" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-      <button class="btn btn-outline" onclick="closeModal('postOverlay')">Cancel</button>
-      <button class="btn btn-primary" onclick="doCreatePost()">Publish</button>
+      <button class="btn btn-outline" onclick="cancelPost()">Cancel</button>
+      <button class="btn btn-primary" onclick="doCreatePost()" id="publishBtn">🚀 Publish</button>
     </div>
   </div>
 </div>
 
-<!-- ── Comments Modal ── -->
+<!-- Comments Modal -->
 <div class="overlay" id="commentsOverlay">
   <div class="modal modal-lg modal-scroll">
     <div class="modal-header">
-      <div class="modal-title" id="commentModalTitle">Comments</div>
+      <div class="modal-title" id="commentModalTitle">💬 Comments</div>
       <button class="modal-close" onclick="closeModal('commentsOverlay')">✕</button>
     </div>
-    <div class="modal-body" id="commentsList" style="min-height:100px;"></div>
+    <div class="modal-body" id="commentsList" style="min-height:80px;padding-bottom:4px;"></div>
     <div class="divider"></div>
-    <div>
-      <textarea class="form-control" id="cBody" rows="2" placeholder="Write a comment..."></textarea>
-      <input type="hidden" id="cPostId">
-      <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="doCreateComment()">Post Comment</button>
-    </div>
+    <textarea class="form-control" id="cBody" rows="2" placeholder="Write a comment… (Ctrl+Enter to post)"></textarea>
+    <input type="hidden" id="cPostId">
+    <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="doCreateComment()">Post Comment</button>
   </div>
 </div>
 
-<!-- ── Sidebar overlay ── -->
+<!-- Image lightbox -->
+<div class="overlay" id="lightboxOverlay" onclick="closeModal('lightboxOverlay')">
+  <img id="lightboxImg" style="max-width:90vw;max-height:90vh;border-radius:10px;box-shadow:var(--shadow-lg);" alt="">
+</div>
+
 <div class="sidebar-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
 
-<!-- ── Header ── -->
+<!-- Header -->
 <header class="header">
   <button class="icon-btn hamburger" onclick="toggleSidebar()">☰</button>
-  <a href="#" class="logo">⬡ Nexus</a>
+  <a href="#" class="logo">
+    <div class="logo-icon">N</div>
+    <span class="logo-text">Nexus</span>
+  </a>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
     <input type="text" placeholder="Search spaces..." id="globalSearch" oninput="onSearch(this.value)">
@@ -487,87 +368,73 @@
   <div class="header-right">
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
     <button class="icon-btn" onclick="navTo('notification-feed.html')" title="Notifications">
-      🔔
-      <span class="notif-badge" id="notifBadge">0</span>
+      🔔<span class="notif-badge" id="notifBadge">0</span>
     </button>
     <div id="headerUser"></div>
   </div>
 </header>
 
-<!-- ── Layout ── -->
 <div class="layout">
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="nav-section">
-      <button class="nav-item active" data-nav="home" onclick="showPage('home', this)">🏠 Home</button>
-      <button class="nav-item" data-nav="explore" onclick="showPage('explore', this)">🌍 Explore Spaces</button>
-      <button class="nav-item" onclick="navTo('notification-feed.html')">🔔 Notifications</button>
-      <button class="nav-item" onclick="navTo('moderation-dashboard.html')">🛡️ Moderation</button>
+      <button class="nav-item active" data-nav="home" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item" data-nav="explore" onclick="showPage('explore',this)"><span class="nav-icon">🌍</span>Explore Spaces</button>
+      <button class="nav-item" onclick="navTo('notification-feed.html')"><span class="nav-icon">🔔</span>Notifications</button>
+      <button class="nav-item" onclick="navTo('moderation-dashboard.html')"><span class="nav-icon">🛡️</span>Moderation</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">My Spaces</div>
-      <div id="sbSpaces" style="margin-bottom:4px;"></div>
-      <button class="nav-item" onclick="openModal('spaceOverlay')">＋ New Space</button>
+      <div id="sbSpaces"></div>
+      <button class="nav-item" onclick="openModal('spaceOverlay')" style="color:var(--primary);"><span class="nav-icon">＋</span>New Space</button>
     </div>
   </aside>
 
-  <!-- Main -->
   <main class="main">
-
-    <!-- HOME PAGE -->
+    <!-- HOME -->
     <div class="page active" id="pageHome">
-      <!-- Not logged in -->
+
       <div id="authPromptBlock" style="display:none">
         <div class="auth-prompt">
-          <div class="auth-prompt-icon">⬡</div>
+          <div class="auth-prompt-icon">N</div>
           <h2>Welcome to Nexus</h2>
           <p>Join communities, share ideas, and connect with people who care about the same things you do.</p>
           <div class="auth-prompt-btns">
             <button class="btn btn-outline" onclick="openAuthModal('login')">Sign In</button>
-            <button class="btn btn-primary" onclick="openAuthModal('register')">Join Free</button>
+            <button class="btn btn-primary" onclick="openAuthModal('register')">Join Free →</button>
           </div>
         </div>
       </div>
 
-      <!-- Logged in create bar -->
       <div id="createBarBlock" class="create-bar" style="display:none">
-        <div class="avatar" id="createAvatar" style="width:34px;height:34px;font-size:13px;">?</div>
-        <input class="create-bar-input" placeholder="What's on your mind?" readonly onclick="openModal('postOverlay')">
-        <button class="btn btn-primary btn-sm" onclick="openModal('postOverlay')">Post</button>
-        <button class="btn btn-outline btn-sm" onclick="openModal('spaceOverlay')">+ Space</button>
+        <div class="avatar" id="createAvatar" style="width:36px;height:36px;font-size:13px;">?</div>
+        <input class="create-bar-input" placeholder="Share something with your community..." readonly onclick="openModal('postOverlay')">
+        <button class="btn btn-primary btn-sm" onclick="openModal('postOverlay')">📝 Post</button>
+        <button class="btn btn-outline btn-sm" onclick="openModal('spaceOverlay')" title="New Space">＋</button>
       </div>
 
-      <!-- Feed tabs -->
+      <div id="serverWakeBanner" class="server-wake" style="display:none">
+        ⏳ <div><strong>Backend is waking up</strong> — free tier servers sleep after inactivity. Usually takes ~30 seconds. Retrying automatically...</div>
+      </div>
+
       <div class="feed-tabs">
-        <button class="feed-tab active" onclick="switchSort('new', this)">New</button>
-        <button class="feed-tab" onclick="switchSort('top', this)">Top</button>
-        <button class="feed-tab" onclick="switchSort('hot', this)">Hot</button>
+        <button class="feed-tab active" onclick="switchSort('new',this)">🆕 New</button>
+        <button class="feed-tab" onclick="switchSort('top',this)">🔥 Top</button>
+        <button class="feed-tab" onclick="switchSort('hot',this)">📈 Hot</button>
       </div>
 
-      <div id="feedLabel" style="font-size:12px;color:var(--text-light);margin-bottom:10px;display:none;"></div>
+      <div id="feedLabel" style="display:none"></div>
       <div id="feed"></div>
     </div>
 
-    <!-- EXPLORE PAGE -->
+    <!-- EXPLORE -->
     <div class="page" id="pageExplore">
       <div class="card">
         <div class="card-title">🌍 Explore Spaces</div>
-        <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
           <input class="form-control" id="exploreSearch" placeholder="Search spaces..." oninput="onExploreSearch(this.value)" style="flex:1;">
-          <button class="btn btn-primary" onclick="openModal('spaceOverlay')">+ New</button>
+          <button class="btn btn-primary" onclick="openModal('spaceOverlay')">＋ Create</button>
         </div>
         <div class="space-grid" id="spaceGrid"></div>
-      </div>
-    </div>
-
-    <!-- Debug panel -->
-    <div class="card" style="margin-top:16px;">
-      <div class="debug-toggle" onclick="toggleDebug()">
-        <span>📡 API Response</span>
-        <span class="debug-chevron" id="debugChev">▼</span>
-      </div>
-      <div class="debug-body" id="debugBody">
-        <div class="debug-pre" id="debugPre">Ready...</div>
       </div>
     </div>
 
@@ -575,385 +442,336 @@
 </div>
 
 <script>
-  /* ─── State ─── */
-  // In production, Vercel proxies /api/* to the Render backend via vercel.json rewrites
-  const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const IS_LOCAL = location.hostname==='localhost'||location.hostname==='127.0.0.1';
   const API = IS_LOCAL ? 'http://localhost:3001/api' : '/api';
-  let token = localStorage.getItem('nexus_token') || localStorage.getItem('token') || '';
-  let me = null;
-  let feedSort = 'new';
-  let feedSpace = null;
-  let spacesSlugs = [];
+  let token = localStorage.getItem('nexus_token')||'';
+  let me=null, feedSort='new', feedSpace=null, retryTimer=null;
+  const $=id=>document.getElementById(id);
 
-  /* ─── Utilities ─── */
-  const $ = id => document.getElementById(id);
-
-  function toast(msg, type = 'info') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
+  function toast(msg,type='info'){
+    const t=document.createElement('div'); t.className=`toast ${type}`;
+    t.innerHTML=`<span style="font-weight:700">${{success:'✓',error:'✕',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
     $('toasts').appendChild(t);
-    setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3200);
+    setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300);},3500);
   }
 
-  function debug(data) { $('debugPre').textContent = JSON.stringify(data, null, 2); }
-
-  function timeAgo(d) {
-    const s = Math.floor((Date.now() - new Date(d)) / 1000);
-    if (s < 60) return `${s}s ago`;
-    if (s < 3600) return `${Math.floor(s/60)}m ago`;
-    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-    return `${Math.floor(s/86400)}d ago`;
+  function timeAgo(d){
+    const s=Math.floor((Date.now()-new Date(d))/1000);
+    if(s<60)return`${s}s`;if(s<3600)return`${Math.floor(s/60)}m`;
+    if(s<86400)return`${Math.floor(s/3600)}h`;return`${Math.floor(s/86400)}d`;
   }
 
-  function esc(s) {
-    if (!s) return '';
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function esc(s){
+    if(!s)return'';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  /* ─── API helper ─── */
-  async function api(endpoint, method = 'GET', data = null, auth = true) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (auth && token) headers['Authorization'] = `Bearer ${token}`;
-    try {
-      const r = await fetch(`${API}${endpoint}`, { method, headers, body: data ? JSON.stringify(data) : undefined });
-      const json = await r.json();
-      debug(json);
-      if (json.tokens) { token = json.tokens.accessToken; localStorage.setItem('nexus_token', token); }
-      if (!r.ok && json.error) throw new Error(json.error);
-      return json;
-    } catch (e) {
-      if (e.name === 'TypeError') toast('Server unreachable — is it running on :3001?', 'error');
-      throw e;
-    }
+  async function api(endpoint,method='GET',data=null,auth=true){
+    const headers={'Content-Type':'application/json'};
+    if(auth&&token)headers['Authorization']=`Bearer ${token}`;
+    const r=await fetch(`${API}${endpoint}`,{method,headers,body:data?JSON.stringify(data):undefined});
+    const json=await r.json();
+    if(json.tokens){token=json.tokens.accessToken;localStorage.setItem('nexus_token',token);}
+    if(!r.ok&&json.error)throw new Error(json.error);
+    return json;
   }
 
-  /* ─── Theme ─── */
-  function toggleTheme() {
-    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
-    localStorage.setItem('nexus_theme', next);
+  function toggleTheme(){
+    const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    $('themeBtn').textContent=next==='dark'?'☀️':'🌙';
+    localStorage.setItem('nexus_theme',next);
   }
-  (()=>{
-    const s = localStorage.getItem('nexus_theme');
-    if (s) { document.documentElement.setAttribute('data-theme', s); if (s==='dark') $('themeBtn').textContent='☀️'; }
-  })();
+  (()=>{const s=localStorage.getItem('nexus_theme');if(s){document.documentElement.setAttribute('data-theme',s);if(s==='dark')$('themeBtn').textContent='☀️';}})();
 
-  /* ─── Navigation ─── */
-  function navTo(url) { window.location.href = `/${url}`; }
-
-  function showPage(name, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  function navTo(url){window.location.href=`/${url}`;}
+  function showPage(name,el){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     $(`page${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
-    document.querySelectorAll('.nav-item[data-nav]').forEach(n => n.classList.remove('active'));
-    if (el) el.classList.add('active');
+    document.querySelectorAll('.nav-item[data-nav]').forEach(n=>n.classList.remove('active'));
+    if(el)el.classList.add('active');
     closeSidebar();
-    if (name === 'explore') loadSpaceGrid();
+    if(name==='explore')loadSpaceGrid();
   }
 
-  /* ─── Sidebar ─── */
-  function toggleSidebar() { $('sidebar').classList.toggle('open'); $('sbOverlay').classList.toggle('open'); }
-  function closeSidebar() { $('sidebar').classList.remove('open'); $('sbOverlay').classList.remove('open'); }
+  function toggleSidebar(){$('sidebar').classList.toggle('open');$('sbOverlay').classList.toggle('open');}
+  function closeSidebar(){$('sidebar').classList.remove('open');$('sbOverlay').classList.remove('open');}
 
-  /* ─── Modals ─── */
-  function openModal(id) { $(id).classList.add('open'); }
-  function closeModal(id) { $(id).classList.remove('open'); }
-  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
+  function openModal(id){$(id).classList.add('open');}
+  function closeModal(id){$(id).classList.remove('open');}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));});
 
-  /* ─── Auth ─── */
-  function openAuthModal(tab = 'login') { openModal('authOverlay'); switchAuth(tab); }
-
-  function switchAuth(tab) {
-    $('formLogin').style.display = tab === 'login' ? 'block' : 'none';
-    $('formReg').style.display   = tab === 'register' ? 'block' : 'none';
-    $('tabLogin').classList.toggle('active', tab === 'login');
-    $('tabReg').classList.toggle('active', tab === 'register');
+  function openAuthModal(tab='login'){openModal('authOverlay');switchAuth(tab);}
+  function switchAuth(tab){
+    $('formLogin').style.display=tab==='login'?'block':'none';
+    $('formReg').style.display=tab==='register'?'block':'none';
+    $('tabLogin').classList.toggle('active',tab==='login');
+    $('tabReg').classList.toggle('active',tab==='register');
   }
 
-  async function doLogin() {
-    const email = $('loginEmail').value.trim();
-    const password = $('loginPw').value;
-    if (!email || !password) return toast('Fill in all fields', 'error');
-    try {
-      await api('/auth/login', 'POST', { email, password }, false);
-      closeModal('authOverlay');
-      await boot(); toast('Welcome back!', 'success');
-    } catch (e) { toast(e.message || 'Login failed', 'error'); }
+  async function doLogin(){
+    const email=$('loginEmail').value.trim(),pw=$('loginPw').value;
+    if(!email||!pw)return toast('Fill in all fields','error');
+    $('loginBtn').textContent='Signing in…';$('loginBtn').disabled=true;
+    try{await api('/auth/login','POST',{email,password:pw},false);closeModal('authOverlay');await boot();toast('Welcome back! 👋','success');}
+    catch(e){toast(e.message||'Login failed','error');}
+    finally{$('loginBtn').textContent='Sign In';$('loginBtn').disabled=false;}
   }
 
-  async function doRegister() {
-    const username = $('regUser').value.trim();
-    const displayName = $('regName').value.trim();
-    const email = $('regEmail').value.trim();
-    const password = $('regPw').value;
-    if (!username || !email || !password) return toast('Fill in all required fields', 'error');
-    try {
-      await api('/auth/register', 'POST', { username, displayName, email, password }, false);
-      await api('/auth/login', 'POST', { email, password }, false);
-      closeModal('authOverlay');
-      await boot(); toast('Account created!', 'success');
-    } catch (e) { toast(e.message || 'Registration failed', 'error'); }
+  async function doRegister(){
+    const username=$('regUser').value.trim(),displayName=$('regName').value.trim();
+    const email=$('regEmail').value.trim(),pw=$('regPw').value;
+    if(!username||!email||!pw)return toast('Fill in all required fields','error');
+    if(pw.length<8)return toast('Password must be at least 8 characters','error');
+    $('regBtn').textContent='Creating account…';$('regBtn').disabled=true;
+    try{
+      await api('/auth/register','POST',{username,displayName,email,password:pw},false);
+      await api('/auth/login','POST',{email,password:pw},false);
+      closeModal('authOverlay');await boot();toast('Account created! Welcome to Nexus 🎉','success');
+    }catch(e){toast(e.message||'Registration failed','error');}
+    finally{$('regBtn').textContent='Create Account — It\'s Free';$('regBtn').disabled=false;}
   }
 
-  function logout() {
-    localStorage.removeItem('nexus_token'); localStorage.removeItem('token');
-    token = ''; me = null;
-    updateHeaderUI(); toast('Signed out', 'info');
+  function logout(){localStorage.removeItem('nexus_token');token='';me=null;updateHeaderUI();toast('Signed out','info');}
+
+  async function boot(){
+    if(!token){updateHeaderUI();loadFeed();return;}
+    try{const r=await api('/auth/me');me=r.user;}
+    catch{token='';localStorage.removeItem('nexus_token');}
+    updateHeaderUI();loadSidebarSpaces();loadUnreadCount();loadFeed();
   }
 
-  /* ─── User init ─── */
-  async function boot() {
-    if (!token) { updateHeaderUI(); loadFeed(); return; }
-    try {
-      const r = await api('/auth/me');
-      me = r.user;
-    } catch { token = ''; localStorage.removeItem('nexus_token'); }
-    updateHeaderUI();
-    loadSidebarSpaces();
-    loadUnreadCount();
-    loadFeed();
-  }
-
-  function updateHeaderUI() {
-    const ap = $('authPromptBlock'), cb = $('createBarBlock'), hu = $('headerUser');
-    if (me) {
-      const ini = (me.displayName || me.username || '?').charAt(0).toUpperCase();
-      $('createAvatar').textContent = ini;
-      ap.style.display = 'none'; cb.style.display = 'flex';
-      hu.innerHTML = `<div class="user-chip" onclick="logout()"><div class="avatar">${ini}</div><span class="user-chip-name">${esc(me.displayName || me.username)}</span><span style="color:var(--text-light);font-size:10px;"> ↩</span></div>`;
-    } else {
-      ap.style.display = 'block'; cb.style.display = 'none';
-      hu.innerHTML = `<button class="btn btn-outline btn-sm" onclick="openAuthModal('login')">Sign In</button>
-                      <button class="btn btn-primary btn-sm" onclick="openAuthModal('register')" style="margin-left:5px;">Join</button>`;
+  function updateHeaderUI(){
+    const ap=$('authPromptBlock'),cb=$('createBarBlock'),hu=$('headerUser');
+    if(me){
+      const ini=(me.displayName||me.username||'?').charAt(0).toUpperCase();
+      $('createAvatar').textContent=ini;
+      ap.style.display='none';cb.style.display='flex';
+      const av=me.avatarUrl?`<img class="avatar-img" src="${esc(me.avatarUrl)}" alt="">`:`<div class="avatar">${ini}</div>`;
+      hu.innerHTML=`<div class="user-chip" onclick="logout()">${av}<span class="user-chip-name">${esc(me.displayName||me.username)}</span><span style="color:var(--text-light);font-size:11px;">↩</span></div>`;
+    }else{
+      ap.style.display='block';cb.style.display='none';
+      hu.innerHTML=`<button class="btn btn-outline btn-sm" onclick="openAuthModal('login')">Sign In</button><button class="btn btn-primary btn-sm" style="margin-left:6px;" onclick="openAuthModal('register')">Join Free</button>`;
     }
   }
 
-  /* ─── Notification badge ─── */
-  async function loadUnreadCount() {
-    if (!token) return;
-    try {
-      const r = await api('/notifications/unread/count');
-      const n = r.unreadCount || 0;
-      const b = $('notifBadge');
-      if (n > 0) { b.textContent = n > 99 ? '99+' : n; b.style.display = 'flex'; }
-      else { b.style.display = 'none'; }
-    } catch {}
+  async function loadUnreadCount(){
+    if(!token)return;
+    try{const r=await api('/notifications/unread/count');const n=r.unreadCount||0,b=$('notifBadge');if(n>0){b.textContent=n>99?'99+':n;b.style.display='flex';}else b.style.display='none';}catch{}
   }
 
-  /* ─── Spaces ─── */
-  async function loadSidebarSpaces() {
-    try {
-      const r = await api('/spaces', 'GET', null, false);
-      spacesSlugs = (r.spaces || []).map(s => s.slug);
-      const dl = $('spaceList');
-      dl.innerHTML = (r.spaces || []).map(s => `<option value="${s.slug}">${s.name}</option>`).join('');
-      const sb = $('sbSpaces');
-      if (r.spaces && r.spaces.length) {
-        sb.innerHTML = r.spaces.slice(0,7).map(s => `
-          <div class="space-nav-item" onclick="openSpace('${s.slug}')">
-            <span class="nav-dot"></span><span>${esc(s.name)}</span>
-          </div>`).join('');
-      } else {
-        sb.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">No spaces yet</div>`;
-      }
-    } catch {}
+  async function loadSidebarSpaces(){
+    try{
+      const r=await api('/spaces','GET',null,false);
+      $('spaceList').innerHTML=(r.spaces||[]).map(s=>`<option value="${s.slug}">${s.name}</option>`).join('');
+      $('sbSpaces').innerHTML=r.spaces?.length
+        ?r.spaces.slice(0,8).map(s=>`<div class="space-pill" onclick="openSpace('${esc(s.slug)}')"><span class="space-pill-dot"></span>${esc(s.name)}</div>`).join('')
+        :`<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">No spaces yet</div>`;
+    }catch{}
   }
 
-  async function loadSpaceGrid(search = '') {
-    const g = $('spaceGrid');
-    g.innerHTML = `<div class="skeleton" style="height:70px;"></div>`.repeat(4);
-    try {
-      const q = search ? `?search=${encodeURIComponent(search)}` : '';
-      const r = await api(`/spaces${q}`, 'GET', null, false);
-      if (!r.spaces || !r.spaces.length) {
-        g.innerHTML = `<div style="grid-column:1/-1"><div class="empty"><div class="empty-icon">🌍</div><div class="empty-title">No spaces found</div><p>Create one to get started!</p><button class="btn btn-primary btn-sm" onclick="openModal('spaceOverlay')">Create Space</button></div></div>`;
-        return;
-      }
-      g.innerHTML = r.spaces.map(s => `
-        <div class="space-card" onclick="openSpace('${esc(s.slug)}')">
-          <div class="space-card-name">${esc(s.name)}</div>
-          <div class="space-card-slug">/${esc(s.slug)}</div>
-          <div class="space-card-meta">${s.memberCount || 0} members · ${s.visibility}</div>
-        </div>`).join('');
-    } catch {
-      g.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:24px;">Failed to load spaces</div>`;
-    }
+  async function loadSpaceGrid(search=''){
+    const g=$('spaceGrid');
+    g.innerHTML=`<div class="skeleton" style="height:85px;"></div>`.repeat(6);
+    try{
+      const q=search?`?search=${encodeURIComponent(search)}`:'';
+      const r=await api(`/spaces${q}`,'GET',null,false);
+      if(!r.spaces?.length){g.innerHTML=`<div style="grid-column:1/-1"><div class="empty"><div class="empty-icon">🌍</div><div class="empty-title">No spaces found</div><p>Be the first to create one!</p><button class="btn btn-primary btn-sm" onclick="openModal('spaceOverlay')">Create Space</button></div></div>`;return;}
+      g.innerHTML=r.spaces.map(s=>`<div class="space-card" onclick="openSpace('${esc(s.slug)}')"><div class="space-card-icon">🌐</div><div class="space-card-name">${esc(s.name)}</div><div class="space-card-slug">n/${esc(s.slug)}</div><div class="space-card-meta">${s.memberCount||0} members</div></div>`).join('');
+    }catch{g.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);">Failed to load spaces</div>`;}
   }
 
   let exploreTimer;
-  function onExploreSearch(v) { clearTimeout(exploreTimer); exploreTimer = setTimeout(() => loadSpaceGrid(v), 280); }
+  function onExploreSearch(v){clearTimeout(exploreTimer);exploreTimer=setTimeout(()=>loadSpaceGrid(v),280);}
 
-  async function doCreateSpace() {
-    const name = $('sName').value.trim();
-    const description = $('sDesc').value.trim();
-    const visibility = $('sVis').value;
-    if (!name) return toast('Name is required', 'error');
-    if (!token) return toast('Please sign in first', 'error');
-    try {
-      const r = await api('/spaces', 'POST', { name, description, visibility });
-      closeModal('spaceOverlay');
-      $('sName').value = ''; $('sDesc').value = '';
-      toast(`Space "${name}" created!`, 'success');
-      loadSidebarSpaces();
-      openSpace(r.space.slug);
-    } catch (e) { toast(e.message || 'Failed to create space', 'error'); }
+  async function doCreateSpace(){
+    const name=$('sName').value.trim(),desc=$('sDesc').value.trim(),vis=$('sVis').value;
+    if(!name)return toast('Name is required','error');
+    if(!token)return toast('Please sign in first','error');
+    try{
+      const r=await api('/spaces','POST',{name,description:desc,visibility:vis});
+      closeModal('spaceOverlay');$('sName').value='';$('sDesc').value='';
+      toast(`Space "${name}" created! 🎉`,'success');loadSidebarSpaces();openSpace(r.space.slug);
+    }catch(e){toast(e.message||'Failed to create space','error');}
   }
 
-  function openSpace(slug) {
-    feedSpace = slug;
-    $('feedLabel').textContent = `Showing posts from: ${slug}`;
-    $('feedLabel').style.display = 'block';
-    showPage('home', document.querySelector('[data-nav="home"]'));
-    loadFeed();
+  function openSpace(slug){
+    feedSpace=slug;
+    $('feedLabel').style.display='flex';
+    $('feedLabel').innerHTML=`<span>📌 Viewing: <strong>n/${esc(slug)}</strong></span><button onclick="clearSpace()">✕ Show all</button>`;
+    showPage('home',document.querySelector('[data-nav="home"]'));loadFeed();
+  }
+  function clearSpace(){feedSpace=null;$('feedLabel').style.display='none';loadFeed();}
+
+  function switchSort(sort,el){
+    feedSort=sort;
+    document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');loadFeed();
   }
 
-  /* ─── Feed ─── */
-  function switchSort(sort, el) {
-    feedSort = sort;
-    document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    loadFeed();
-  }
+  async function loadFeed(){
+    const f=$('feed');
+    f.innerHTML=`<div class="post-card skeleton" style="height:100px;display:block;"></div>`.repeat(4);
+    clearTimeout(retryTimer);$('serverWakeBanner').style.display='none';
 
-  async function loadFeed() {
-    const f = $('feed');
-    f.innerHTML = `<div class="post-card skeleton" style="height:110px;"></div>`.repeat(3);
-
-    if (!feedSpace) {
-      try {
-        const r = await api('/spaces', 'GET', null, false);
-        if (r.spaces && r.spaces.length) feedSpace = r.spaces[0].slug;
-        else {
-          f.innerHTML = `<div class="empty"><div class="empty-icon">📝</div><div class="empty-title">No spaces yet</div><p>Create a space to start posting!</p>${token?`<button class="btn btn-primary btn-sm" onclick="openModal('spaceOverlay')">Create Space</button>`:''}</div>`;
+    if(!feedSpace){
+      try{
+        const r=await api('/spaces','GET',null,false);
+        if(r.spaces?.length)feedSpace=r.spaces[0].slug;
+        else{
+          f.innerHTML=`<div class="empty"><div class="empty-icon">🚀</div><div class="empty-title">No spaces yet</div><p>Create a space to start your community!</p>${token?`<button class="btn btn-primary btn-sm" onclick="openModal('spaceOverlay')">Create First Space</button>`:''}</div>`;
           return;
         }
-      } catch { f.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Cannot reach server</div><p>Make sure the backend is running on port 3001.</p></div>`; return; }
+      }catch(e){
+        if(e instanceof TypeError){
+          $('serverWakeBanner').style.display='flex';
+          retryTimer=setTimeout(loadFeed,8000);
+        }
+        f.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Connecting to server…</div><p>The backend is starting up. Usually takes ~30s on the free tier.</p></div>`;
+        return;
+      }
     }
 
-    try {
-      const r = await api(`/posts/space/${feedSpace}?sort=${feedSort}&limit=25`, 'GET', null, false);
-      renderFeed(r.posts || []);
-    } catch { f.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load posts</div></div>`; }
+    try{
+      const r=await api(`/posts/space/${feedSpace}?sort=${feedSort}&limit=25`,'GET',null,false);
+      renderFeed(r.posts||[]);
+    }catch{f.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load posts</div><p>Please try refreshing the page.</p></div>`;}
   }
 
-  function renderFeed(posts) {
-    const f = $('feed');
-    if (!posts.length) {
-      f.innerHTML = `<div class="empty"><div class="empty-icon">📝</div><div class="empty-title">No posts yet</div><p>Be the first to post in this space!</p>${token?`<button class="btn btn-primary btn-sm" onclick="openModal('postOverlay')">Create Post</button>`:''}</div>`;
+  function renderFeed(posts){
+    const f=$('feed');
+    if(!posts.length){
+      f.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><div class="empty-title">No posts yet</div><p>Be the first to post in this space!</p>${token?`<button class="btn btn-primary btn-sm" onclick="openModal('postOverlay')">Create Post</button>`:''}</div>`;
       return;
     }
-    f.innerHTML = posts.map(p => `
-      <div class="post-card">
-        <div class="post-meta">
-          <span class="post-space-tag" onclick="openSpace('${feedSpace}')">${esc(feedSpace)}</span>
-          <span class="post-author">by ${esc(p.author?.displayName || p.author?.username || 'Unknown')}</span>
-          <span class="post-time">${timeAgo(p.createdAt)}</span>
+    f.innerHTML=posts.map(p=>{
+      const score=(p.upvotes||0)-(p.downvotes||0);
+      const scoreColor=score>0?'color:var(--primary)':score<0?'color:var(--danger)':'';
+      const img=p.mediaUrls?.[0]?`<img class="post-image" src="${esc(p.mediaUrls[0])}" alt="Post image" loading="lazy" onclick="openLightbox('${esc(p.mediaUrls[0])}')">` :'';
+      return `<div class="post-card">
+        <div class="vote-col">
+          <button class="vote-btn up" onclick="doVote('${p.id}','up')" title="Upvote">▲</button>
+          <span class="vote-score" style="${scoreColor}">${score}</span>
+          <button class="vote-btn down" onclick="doVote('${p.id}','down')" title="Downvote">▼</button>
         </div>
-        <div class="post-title">${esc(p.title)}</div>
-        ${p.content ? `<div class="post-body">${esc(p.content)}</div>` : ''}
-        <div class="post-actions">
-          <button class="action-btn" onclick="doVote('${p.id}','up')">▲ ${p.upvotes||0}</button>
-          <button class="action-btn down" onclick="doVote('${p.id}','down')">▼ ${p.downvotes||0}</button>
-          <button class="action-btn" onclick="openComments('${p.id}','${esc(p.title)}')">💬 ${p.commentCount||0}</button>
-          <span class="post-id-tag" title="ID: ${p.id}">#${p.id.slice(0,8)}</span>
+        <div class="post-body-col">
+          <div class="post-meta">
+            <span class="post-space-tag" onclick="openSpace('${esc(feedSpace||'')}')">n/${esc(feedSpace||'')}</span>
+            <span class="post-author">by <strong>${esc(p.author?.displayName||p.author?.username||'Unknown')}</strong></span>
+            <span class="post-time">${timeAgo(p.createdAt)} ago</span>
+          </div>
+          <div class="post-title">${esc(p.title)}</div>
+          ${p.content?`<div class="post-text">${esc(p.content)}</div>`:''}
+          ${img}
+          <div class="post-actions">
+            <button class="action-btn" onclick="openComments('${p.id}','${esc(p.title)}')">💬 ${p.commentCount||0} comments</button>
+            <button class="action-btn" onclick="copyLink('${p.id}')">🔗 Share</button>
+          </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
-  async function doCreatePost() {
-    const spaceSlug = $('pSpace').value.trim();
-    const title = $('pTitle').value.trim();
-    const content = $('pBody').value.trim();
-    if (!spaceSlug) return toast('Select a space', 'error');
-    if (!title) return toast('Title is required', 'error');
-    if (!token) return toast('Please sign in first', 'error');
-    try {
-      await api('/posts', 'POST', { spaceSlug, title, content, type: 'TEXT' });
-      closeModal('postOverlay');
-      $('pTitle').value = ''; $('pBody').value = '';
-      toast('Post published!', 'success');
-      feedSpace = spaceSlug;
-      loadFeed();
-    } catch (e) { toast(e.message || 'Failed to publish', 'error'); }
+  function copyLink(id){navigator.clipboard?.writeText(location.origin+'?post='+id);toast('Link copied!','success');}
+  function openLightbox(url){$('lightboxImg').src=url;openModal('lightboxOverlay');}
+
+  /* Image upload via Cloudinary signed upload */
+  async function onImageSelected(input){
+    const file=input.files[0];if(!file)return;
+    if(file.size>10*1024*1024)return toast('Image must be under 10MB','error');
+    const area=$('uploadArea'),status=$('uploadStatus');
+    area.classList.add('uploading');status.textContent='⏳ Uploading…';
+    try{
+      const {timestamp,signature,apiKey,cloudName,folder}=await api('/upload/sign','POST',{},true);
+      const fd=new FormData();
+      fd.append('file',file);fd.append('timestamp',timestamp);
+      fd.append('signature',signature);fd.append('api_key',apiKey);fd.append('folder',folder);
+      const resp=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
+      const data=await resp.json();
+      if(!data.secure_url)throw new Error('Upload failed');
+      $('pImageUrl').value=data.secure_url;
+      $('uploadPreview').src=data.secure_url;
+      area.classList.remove('uploading');area.classList.add('has-image');
+      status.textContent='✓ Image ready';toast('Image uploaded!','success');
+    }catch(e){
+      area.classList.remove('uploading');status.textContent='Upload failed — try again';
+      toast(e.message||'Image upload failed','error');
+    }
   }
 
-  async function doVote(postId, voteType) {
-    if (!token) return toast('Sign in to vote', 'error');
-    try { await api(`/votes/posts/${postId}/vote`, 'POST', { voteType }); loadFeed(); }
-    catch (e) { toast(e.message || 'Vote failed', 'error'); }
+  async function doCreatePost(){
+    const spaceSlug=$('pSpace').value.trim(),title=$('pTitle').value.trim();
+    const content=$('pBody').value.trim(),imageUrl=$('pImageUrl').value;
+    if(!spaceSlug)return toast('Select a space','error');
+    if(!title)return toast('Title is required','error');
+    if(!token)return toast('Please sign in first','error');
+    $('publishBtn').textContent='Publishing…';$('publishBtn').disabled=true;
+    try{
+      const mediaUrls=imageUrl?[imageUrl]:[];
+      await api('/posts','POST',{spaceSlug,title,content,type:'TEXT',mediaUrls});
+      cancelPost();toast('Post published! 🚀','success');feedSpace=spaceSlug;loadFeed();
+    }catch(e){toast(e.message||'Failed to publish','error');}
+    finally{$('publishBtn').textContent='🚀 Publish';$('publishBtn').disabled=false;}
   }
 
-  /* ─── Comments ─── */
-  async function openComments(postId, title) {
-    $('cPostId').value = postId;
-    $('commentModalTitle').textContent = title || 'Comments';
+  function cancelPost(){
+    closeModal('postOverlay');
+    $('pTitle').value='';$('pBody').value='';$('pImageUrl').value='';
+    const area=$('uploadArea');area.classList.remove('has-image','uploading');
+    $('uploadPreview').src='';$('uploadStatus').textContent='';$('imageInput').value='';
+  }
+
+  async function doVote(postId,voteType){
+    if(!token)return toast('Sign in to vote','error');
+    try{await api(`/votes/posts/${postId}/vote`,'POST',{voteType});loadFeed();}
+    catch(e){toast(e.message||'Vote failed','error');}
+  }
+
+  async function openComments(postId,title){
+    $('cPostId').value=postId;$('commentModalTitle').textContent=`💬 ${title||'Comments'}`;
     openModal('commentsOverlay');
-    const cl = $('commentsList');
-    cl.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);">Loading...</div>`;
-    try {
-      const r = await api(`/comments/post/${postId}`, 'GET', null, false);
-      renderComments(r.comments || [], cl);
-    } catch { cl.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);">Failed to load comments</div>`; }
+    const cl=$('commentsList');
+    cl.innerHTML=`<div style="padding:16px;text-align:center;color:var(--text-muted);">Loading…</div>`;
+    try{const r=await api(`/comments/post/${postId}`,'GET',null,false);renderComments(r.comments||[],cl);}
+    catch{cl.innerHTML=`<div style="padding:16px;text-align:center;color:var(--text-muted);">Failed to load comments</div>`;}
   }
 
-  function renderComments(comments, el) {
-    if (!comments.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">💬</div><div class="empty-title">No comments yet</div><p>Start the conversation!</p></div>`; return; }
-    el.innerHTML = comments.map(c => `
+  function renderComments(comments,el){
+    if(!comments.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💬</div><div class="empty-title">No comments yet</div><p>Start the conversation!</p></div>`;return;}
+    el.innerHTML=comments.map(c=>`
       <div class="comment-item">
-        <div class="comment-author">${esc(c.author?.displayName||c.author?.username||'Unknown')}<span class="comment-time">${timeAgo(c.createdAt)}</span></div>
+        <div class="comment-author">
+          <div class="avatar" style="width:22px;height:22px;font-size:9px;">${(c.author?.displayName||c.author?.username||'?').charAt(0).toUpperCase()}</div>
+          ${esc(c.author?.displayName||c.author?.username||'Unknown')}
+          <span class="comment-time">${timeAgo(c.createdAt)} ago</span>
+        </div>
         <div class="comment-body">${esc(c.content)}</div>
-        ${c.replies?.length ? `<div class="replies-wrap">${c.replies.map(r=>`
-          <div class="comment-item" style="margin-bottom:6px;">
-            <div class="comment-author">${esc(r.author?.displayName||r.author?.username||'Unknown')}<span class="comment-time">${timeAgo(r.createdAt)}</span></div>
-            <div class="comment-body">${esc(r.content)}</div>
-          </div>`).join('')}</div>` : ''}
+        ${c.replies?.length?`<div class="replies-wrap">${c.replies.map(r=>`<div class="comment-item" style="margin-bottom:6px;"><div class="comment-author"><div class="avatar" style="width:20px;height:20px;font-size:8px;">${(r.author?.displayName||r.author?.username||'?').charAt(0).toUpperCase()}</div>${esc(r.author?.displayName||r.author?.username||'Unknown')}<span class="comment-time">${timeAgo(r.createdAt)} ago</span></div><div class="comment-body">${esc(r.content)}</div></div>`).join('')}</div>`:''}
       </div>`).join('');
   }
 
-  async function doCreateComment() {
-    const content = $('cBody').value.trim();
-    const postId = $('cPostId').value;
-    if (!content) return toast('Comment is empty', 'error');
-    if (!token) return toast('Please sign in first', 'error');
-    try {
-      await api('/comments', 'POST', { content, postId });
-      $('cBody').value = '';
-      toast('Comment posted!', 'success');
-      const r = await api(`/comments/post/${postId}`, 'GET', null, false);
-      renderComments(r.comments || [], $('commentsList'));
-    } catch (e) { toast(e.message || 'Failed to post comment', 'error'); }
+  async function doCreateComment(){
+    const content=$('cBody').value.trim(),postId=$('cPostId').value;
+    if(!content)return toast('Comment is empty','error');
+    if(!token)return toast('Please sign in first','error');
+    try{
+      await api('/comments','POST',{content,postId});$('cBody').value='';toast('Comment posted!','success');
+      const r=await api(`/comments/post/${postId}`,'GET',null,false);renderComments(r.comments||[],$('commentsList'));
+    }catch(e){toast(e.message||'Failed to post comment','error');}
   }
 
-  /* ─── Search ─── */
   let searchTimer;
-  function onSearch(v) {
-    clearTimeout(searchTimer);
-    if (!v.trim()) return;
-    searchTimer = setTimeout(() => {
-      showPage('explore', document.querySelector('[data-nav="explore"]'));
-      $('exploreSearch').value = v;
-      loadSpaceGrid(v);
-    }, 280);
+  function onSearch(v){
+    clearTimeout(searchTimer);if(!v.trim())return;
+    searchTimer=setTimeout(()=>{showPage('explore',document.querySelector('[data-nav="explore"]'));$('exploreSearch').value=v;loadSpaceGrid(v);},280);
   }
 
-  /* ─── Debug panel ─── */
-  function toggleDebug() {
-    const b = $('debugBody'), c = $('debugChev');
-    const open = b.style.display !== 'none';
-    b.style.display = open ? 'none' : 'block';
-    c.classList.toggle('open', !open);
-  }
+  $('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  $('regPw').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+  $('cBody').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)doCreateComment();});
 
-  /* ─── Keyboard shortcuts ─── */
-  $('loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  $('regPw').addEventListener('keydown',   e => { if (e.key === 'Enter') doRegister(); });
-  $('cBody').addEventListener('keydown',   e => { if (e.key === 'Enter' && e.ctrlKey) doCreateComment(); });
-
-  /* ─── Boot ─── */
   boot();
-  setInterval(loadUnreadCount, 30000);
+  setInterval(loadUnreadCount,30000);
 </script>
 </body>
 </html>

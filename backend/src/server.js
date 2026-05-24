@@ -49,6 +49,7 @@ app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/moderation', require('./routes/moderationRoutes'));
 app.use('/api/push', require('./routes/pushRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Serve frontend HTML pages from project root
 const htmlPages = ['nexus-web', 'notification-feed', 'moderation-dashboard', 'status', 'test-api'];
