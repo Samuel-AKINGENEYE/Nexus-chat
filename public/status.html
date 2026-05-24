@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nexus Server Status</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .online { background: #10b981; color: white; }
+        .info { background: #3b82f6; }
+        pre { background: #0f3460; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Nexus Platform - Server Status</h1>
+    <div id="api-status" class="status">Checking API...</div>
+    <div id="db-status" class="status">Checking Database...</div>
+    
+    <h2>📡 API Info</h2>
+    <pre id="api-info">Loading...</pre>
+    
+    <h2>🏠 Spaces</h2>
+    <pre id="spaces">Loading...</pre>
+    
+    <script>
+        async function checkStatus() {
+            try {
+                const health = await fetch('http://localhost:3001/health');
+                if (health.ok) {
+                    document.getElementById('api-status').innerHTML = '✅ API Server: ONLINE';
+                    document.getElementById('api-status').className = 'status online';
+                    const healthData = await health.json();
+                    document.getElementById('api-info').innerHTML = JSON.stringify(healthData, null, 2);
+                }
+            } catch(e) {
+                document.getElementById('api-status').innerHTML = '❌ API Server: OFFLINE';
+            }
+            
+            try {
+                const spaces = await fetch('http://localhost:3001/api/spaces');
+                if (spaces.ok) {
+                    const spacesData = await spaces.json();
+                    document.getElementById('spaces').innerHTML = JSON.stringify(spacesData, null, 2);
+                }
+            } catch(e) {
+                document.getElementById('spaces').innerHTML = 'Unable to fetch spaces';
+            }
+        }
+        
+        checkStatus();
+        setInterval(checkStatus, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus — Moderation Dashboard</title>
+  <style>
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff;
+      --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+      --bg: #f8fafc; --surface: #ffffff; --surface-2: #f1f5f9;
+      --border: #e2e8f0; --text: #0f172a; --text-muted: #64748b; --text-light: #94a3b8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07); --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 28px rgba(0,0,0,0.12);
+      --radius: 12px; --radius-sm: 8px; --radius-full: 9999px;
+      --header-h: 60px; --transition: 0.18s ease;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a; --surface: #1e293b; --surface-2: #334155; --border: #334155;
+      --text: #f1f5f9; --text-muted: #94a3b8; --text-light: #475569;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.35); --shadow: 0 4px 12px rgba(0,0,0,0.35);
+      --shadow-lg: 0 8px 28px rgba(0,0,0,0.5); --primary-light: rgba(99,102,241,0.2);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; -webkit-font-smoothing:antialiased; }
+    button { font-family:inherit; cursor:pointer; }
+
+    /* Header */
+    .header {
+      position:fixed; top:0; left:0; right:0; height:var(--header-h);
+      background:var(--surface); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 20px; gap:12px;
+      z-index:100; box-shadow:var(--shadow-sm);
+    }
+    .back-btn {
+      width:34px; height:34px; border-radius:var(--radius-full); border:none;
+      background:var(--surface-2); color:var(--text-muted); font-size:16px;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .back-btn:hover { background:var(--primary-light); color:var(--primary); }
+    .page-title { font-size:17px; font-weight:800; color:var(--text); }
+    .header-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .icon-btn {
+      width:34px; height:34px; border-radius:var(--radius-full); border:none;
+      background:var(--surface-2); color:var(--text-muted); font-size:14px;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .icon-btn:hover { background:var(--primary-light); color:var(--primary); }
+
+    /* Layout */
+    .page { padding-top:var(--header-h); max-width:960px; margin:0 auto; padding-left:20px; padding-right:20px; padding-bottom:32px; }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; gap:5px; padding:7px 14px;
+      border-radius:var(--radius-sm); font-size:12px; font-weight:600;
+      border:none; transition:var(--transition); white-space:nowrap;
+    }
+    .btn-primary  { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-dark); }
+    .btn-success  { background:var(--success); color:#fff; }
+    .btn-success:hover  { filter:brightness(1.1); }
+    .btn-danger   { background:var(--danger); color:#fff; }
+    .btn-danger:hover   { filter:brightness(1.1); }
+    .btn-neutral  { background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border); }
+    .btn-neutral:hover  { background:var(--border); color:var(--text); }
+    .btn-outline  { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+    .btn-outline:hover  { background:var(--surface-2); color:var(--text); }
+    .btn-sm { padding:5px 10px; font-size:11px; }
+
+    /* Stats row */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin:16px 0; }
+    .stat-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:16px 18px; box-shadow:var(--shadow-sm);
+    }
+    .stat-value { font-size:30px; font-weight:800; color:var(--primary); line-height:1.1; }
+    .stat-value.danger { color:var(--danger); }
+    .stat-value.success { color:var(--success); }
+    .stat-label { font-size:12px; color:var(--text-muted); margin-top:4px; font-weight:500; }
+
+    /* Tabs */
+    .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+    .tab-btn {
+      padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-muted);
+      border:none; background:none; border-bottom:2px solid transparent;
+      margin-bottom:-1px; transition:var(--transition); cursor:pointer;
+    }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* Report cards */
+    .report-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-left:3px solid var(--danger); border-radius:var(--radius);
+      padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow-sm);
+      transition:var(--transition);
+    }
+    .report-card:hover { box-shadow:var(--shadow); }
+    .report-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .report-meta { font-size:12px; color:var(--text-muted); }
+    .report-reason {
+      background:#fee2e2; color:var(--danger); padding:2px 9px;
+      border-radius:var(--radius-full); font-size:11px; font-weight:700; flex-shrink:0;
+    }
+    .report-content { font-size:13px; color:var(--text); margin-bottom:10px; background:var(--surface-2); border-radius:var(--radius-sm); padding:8px 10px; }
+    .report-actions { display:flex; gap:6px; flex-wrap:wrap; }
+
+    /* Log items */
+    .log-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+      padding:10px 14px; margin-bottom:7px; display:flex; align-items:flex-start; gap:10px;
+    }
+    .log-action-badge {
+      background:var(--primary-light); color:var(--primary); padding:2px 9px;
+      border-radius:var(--radius-full); font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0;
+    }
+    .log-body { flex:1; min-width:0; }
+    .log-text { font-size:13px; color:var(--text); }
+    .log-meta { font-size:11px; color:var(--text-light); margin-top:2px; }
+
+    /* Empty state */
+    .empty { text-align:center; padding:40px 16px; color:var(--text-muted); }
+    .empty-icon { font-size:40px; margin-bottom:10px; }
+    .empty-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:5px; }
+
+    /* Skeleton */
+    .skeleton {
+      background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);
+      background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Toast */
+    .toasts { position:fixed; bottom:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+    .toast {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:10px 14px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:500;
+      display:flex; align-items:center; gap:7px; max-width:280px; pointer-events:auto;
+      animation:toastIn .22s ease;
+    }
+    .toast.success { border-left:3px solid var(--success); }
+    .toast.error   { border-left:3px solid var(--danger); }
+    .toast.info    { border-left:3px solid var(--primary); }
+    @keyframes toastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:none} }
+
+    /* Confirm dialog */
+    .overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
+      z-index:200; align-items:center; justify-content:center; padding:16px;
+      backdrop-filter:blur(3px);
+    }
+    .overlay.open { display:flex; }
+    .modal {
+      background:var(--surface); border-radius:16px; padding:24px;
+      width:100%; max-width:380px; box-shadow:var(--shadow-lg);
+      animation:modalIn .18s ease;
+    }
+    @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:none} }
+    .modal-title { font-size:17px; font-weight:800; color:var(--text); margin-bottom:8px; }
+    .modal-body { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+  </style>
+</head>
+<body>
+<div class="toasts" id="toasts"></div>
+
+<!-- Confirm Modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle">Confirm Action</div>
+    <div class="modal-body" id="confirmBody">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk" onclick="runConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <button class="back-btn" onclick="window.location.href='/nexus-web.html'" title="Back to app">←</button>
+  <div class="page-title">🛡️ Moderation</div>
+  <div class="header-right">
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    <button class="btn btn-outline" style="font-size:12px;" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="page">
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value danger" id="statPending">—</div>
+      <div class="stat-label">Pending Reports</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Total Reports</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value success" id="statLogs">—</div>
+      <div class="stat-label">Actions Taken</div>
+    </div>
+  </div>
+
+  <!-- Tabs — BUG FIX: pass btn element directly, no global event dependency -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabReports" onclick="switchTab('reports', this)">📋 Reports</button>
+    <button class="tab-btn"        id="tabLogs"    onclick="switchTab('logs', this)">📜 Action Log</button>
+  </div>
+
+  <div class="tab-panel active" id="panelReports">
+    <div id="reportsList"></div>
+  </div>
+  <div class="tab-panel" id="panelLogs">
+    <div id="logsList"></div>
+  </div>
+</div>
+
+<script>
+  const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const API = IS_LOCAL ? 'http://localhost:3001/api' : '/api';
+  const token = localStorage.getItem('nexus_token') || localStorage.getItem('token') || '';
+  let pendingConfirm = null;
+
+  if (!token) window.location.href = '/nexus-web.html';
+
+  /* ── Utils ── */
+  const $ = id => document.getElementById(id);
+
+  function toast(msg, type = 'info') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
+    $('toasts').appendChild(t);
+    setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3200);
+  }
+
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
+  function timeAgo(d) {
+    const s = Math.floor((Date.now() - new Date(d)) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+    return new Date(d).toLocaleDateString();
+  }
+
+  /* ── Theme ── */
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('nexus_theme', next);
+  }
+  (()=>{
+    const s = localStorage.getItem('nexus_theme');
+    if (s) { document.documentElement.setAttribute('data-theme', s); if (s==='dark') $('themeBtn').textContent='☀️'; }
+  })();
+
+  /* ── API ── */
+  async function api(endpoint, method = 'GET', data = null) {
+    const r = await fetch(`${API}${endpoint}`, {
+      method,
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+      body: data ? JSON.stringify(data) : undefined
+    });
+    return r.json();
+  }
+
+  /* ── Tabs — BUG FIX: accepts btn element as parameter instead of relying on global event ── */
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $(`panel${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
+    if (name === 'reports') loadReports();
+    if (name === 'logs')    loadLogs();
+  }
+
+  /* ── Reports ── */
+  async function loadReports() {
+    const el = $('reportsList');
+    el.innerHTML = `<div class="skeleton" style="height:90px;margin-bottom:10px;"></div>`.repeat(3);
+    try {
+      const r = await api('/moderation/reports');
+      const reports = r.reports || [];
+      $('statPending').textContent = reports.length;
+      if (!reports.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No pending reports</div><p>All clear!</p></div>`;
+        return;
+      }
+      el.innerHTML = reports.map(rep => `
+        <div class="report-card" id="rep-${rep.id}">
+          <div class="report-header">
+            <div>
+              <div class="report-meta">
+                Reported by <strong>${esc(rep.reporter?.username || 'Unknown')}</strong>
+                · ${timeAgo(rep.createdAt)}
+              </div>
+            </div>
+            <span class="report-reason">${esc(rep.reason)}</span>
+          </div>
+          <div class="report-content">
+            ${esc(rep.post?.title || rep.comment?.content || 'No content available')}
+          </div>
+          <div class="report-actions">
+            <button class="btn btn-success btn-sm" onclick="resolveReport('${rep.id}', 'approve')">✅ Keep Content</button>
+            <button class="btn btn-danger btn-sm"  onclick="confirmResolve('${rep.id}', 'delete')">🗑 Delete Content</button>
+            <button class="btn btn-neutral btn-sm" onclick="resolveReport('${rep.id}', 'dismiss')">✕ Dismiss</button>
+          </div>
+        </div>`).join('');
+    } catch {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load reports</div></div>`;
+    }
+  }
+
+  function confirmResolve(reportId, action) {
+    pendingConfirm = { reportId, action };
+    $('confirmTitle').textContent = 'Delete Content';
+    $('confirmBody').textContent = 'This will permanently delete the reported content. This action cannot be undone.';
+    $('confirmOverlay').classList.add('open');
+  }
+
+  function closeConfirm() { $('confirmOverlay').classList.remove('open'); pendingConfirm = null; }
+  function runConfirm() { if (pendingConfirm) { closeConfirm(); resolveReport(pendingConfirm.reportId, pendingConfirm.action); } }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
+  $('confirmOverlay').addEventListener('click', e => { if (e.target === $('confirmOverlay')) closeConfirm(); });
+
+  async function resolveReport(reportId, action) {
+    const card = $(`rep-${reportId}`);
+    if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
+    try {
+      await api(`/moderation/reports/${reportId}/resolve`, 'PUT', { action, modNotes: `Action: ${action}` });
+      const msgs = { approve:'Content kept', delete:'Content deleted', dismiss:'Report dismissed' };
+      toast(msgs[action] || 'Report resolved', 'success');
+      loadReports();
+      loadLogs();
+    } catch {
+      toast('Failed to resolve report', 'error');
+      if (card) { card.style.opacity = ''; card.style.pointerEvents = ''; }
+    }
+  }
+
+  /* ── Logs ── */
+  async function loadLogs() {
+    const el = $('logsList');
+    el.innerHTML = `<div class="skeleton" style="height:52px;margin-bottom:7px;"></div>`.repeat(4);
+    try {
+      const r = await api('/moderation/logs');
+      const logs = r.logs || [];
+      $('statLogs').textContent = logs.length;
+      if (!logs.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">📜</div><div class="empty-title">No actions yet</div></div>`;
+        return;
+      }
+      el.innerHTML = logs.map(log => `
+        <div class="log-item">
+          <span class="log-action-badge">${esc(log.action)}</span>
+          <div class="log-body">
+            <div class="log-text">
+              <strong>${esc(log.moderator?.username || 'Unknown')}</strong>
+              acted on ${esc(log.targetType || 'content')}
+            </div>
+            <div class="log-meta">
+              ${esc(log.reason || '')} · ${timeAgo(log.createdAt)}
+            </div>
+          </div>
+        </div>`).join('');
+    } catch {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load logs</div></div>`;
+    }
+  }
+
+  /* ── Auth ── */
+  function logout() {
+    localStorage.removeItem('nexus_token'); localStorage.removeItem('token');
+    window.location.href = '/nexus-web.html';
+  }
+
+  /* ── Init ── */
+  async function init() {
+    await Promise.all([loadReports(), loadLogs()]);
+    // Fetch total (unfiltered) report count for stats
+    const r = await api('/moderation/reports').catch(() => ({}));
+    const total = (r.reports || []).length;
+    $('statTotal').textContent = total;
+  }
+
+  init();
+  setInterval(init, 15000);
+</script>
+</body>
+</html>
