@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const { prisma } = require('../lib/prisma');
 
-// Generate JWT tokens
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(
     { userId },
@@ -20,10 +19,8 @@ const generateTokens = (userId) => {
   return { accessToken, refreshToken };
 };
 
-// Register new user
 const register = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -31,13 +28,9 @@ const register = async (req, res) => {
     
     const { username, email, password, displayName } = req.body;
     
-    // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email },
-          { username }
-        ]
+        OR: [{ email }, { username }]
       }
     });
     
@@ -48,11 +41,9 @@ const register = async (req, res) => {
       });
     }
     
-    // Hash password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
     
-    // Create user
     const user = await prisma.user.create({
       data: {
         username,
@@ -62,10 +53,8 @@ const register = async (req, res) => {
       }
     });
     
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user.id);
     
-    // Store refresh token in database (simplified - you'd want a separate table)
     await prisma.session.create({
       data: {
         userId: user.id,
@@ -74,7 +63,6 @@ const register = async (req, res) => {
       }
     });
     
-    // Return user info (excluding sensitive data)
     res.status(201).json({
       message: 'Registration successful',
       user: {
@@ -84,10 +72,7 @@ const register = async (req, res) => {
         displayName: user.displayName,
         createdAt: user.createdAt
       },
-      tokens: {
-        accessToken,
-        refreshToken
-      }
+      tokens: { accessToken, refreshToken }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -95,7 +80,6 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
 const login = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -105,25 +89,21 @@ const login = async (req, res) => {
     
     const { email, password } = req.body;
     
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email }
     });
     
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    // Check password
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user.id);
     
-    // Store refresh token
     await prisma.session.create({
       data: {
         userId: user.id,
@@ -140,10 +120,7 @@ const login = async (req, res) => {
         email: user.email,
         displayName: user.displayName
       },
-      tokens: {
-        accessToken,
-        refreshToken
-      }
+      tokens: { accessToken, refreshToken }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -151,7 +128,6 @@ const login = async (req, res) => {
   }
 };
 
-// Refresh token
 const refresh = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -160,10 +136,8 @@ const refresh = async (req, res) => {
       return res.status(400).json({ error: 'Refresh token required' });
     }
     
-    // Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your-refresh-secret');
     
-    // Check if token exists in database
     const session = await prisma.session.findFirst({
       where: {
         refreshToken,
@@ -177,10 +151,8 @@ const refresh = async (req, res) => {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
     
-    // Generate new tokens
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
     
-    // Revoke old token and create new one
     await prisma.session.update({
       where: { id: session.id },
       data: { revokedAt: new Date() }
@@ -194,17 +166,13 @@ const refresh = async (req, res) => {
       }
     });
     
-    res.json({
-      accessToken,
-      refreshToken: newRefreshToken
-    });
+    res.json({ accessToken, refreshToken: newRefreshToken });
   } catch (error) {
     console.error('Refresh error:', error);
     res.status(401).json({ error: 'Invalid refresh token' });
   }
 };
 
-// Logout
 const logout = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -223,9 +191,4 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = {
-  register,
-  login,
-  refresh,
-  logout
-};
+module.exports = { register, login, refresh, logout };

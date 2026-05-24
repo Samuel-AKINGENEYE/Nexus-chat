@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
+const spaceRoutes = require('./routes/spaceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,14 +16,16 @@ app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/auth', limiter);
+app.use('/api/spaces', limiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/spaces', spaceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -35,12 +38,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server only if not in test mode
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🔐 Auth endpoints available at http://localhost:${PORT}/api/auth`);
+    console.log(`🏠 Space endpoints available at http://localhost:${PORT}/api/spaces`);
   });
 }
 
