@@ -20,15 +20,21 @@ model User {
   lastSeenAt    DateTime  @default(now())
   deletedAt     DateTime?
   
-  posts         Post[]
-  comments      Comment[]
-  sessions      Session[]
-  ownedSpaces   Space[]   @relation("SpaceCreator")
-  spaceMembers  SpaceMember[]
-  conversations ConversationParticipant[]
-  sentMessages  Message[] @relation("SentMessages")
-  votes         Vote[]
-  notifications Notification[]
+  posts           Post[]
+  comments        Comment[]
+  sessions        Session[]
+  ownedSpaces     Space[]    @relation("SpaceCreator")
+  spaceMembers    SpaceMember[]
+  conversations   ConversationParticipant[]
+  sentMessages    Message[]  @relation("SentMessages")
+  votes           Vote[]
+  notifications   Notification[]
+  reports         Report[]       @relation("Reporter")
+  resolvedReports Report[]       @relation("ResolvedReports")
+  moderationLogs  ModerationLog[]
+  bans            Ban[]          @relation("BannedUser")
+  createdBans     Ban[]          @relation("BanCreator")
+  deviceTokens    DeviceToken[]
 }
 
 model Session {
@@ -58,9 +64,11 @@ model Space {
   updatedAt     DateTime      @updatedAt
   createdBy     String
   
-  creator       User          @relation("SpaceCreator", fields: [createdBy], references: [id])
-  posts         Post[]
-  members       SpaceMember[]
+  creator        User           @relation("SpaceCreator", fields: [createdBy], references: [id])
+  posts          Post[]
+  members        SpaceMember[]
+  bans           Ban[]
+  moderationLogs ModerationLog[]
 }
 
 enum Visibility {
@@ -111,6 +119,7 @@ model Post {
   space        Space     @relation(fields: [spaceId], references: [id])
   comments     Comment[]
   votes        Vote[]
+  reports      Report[]
 }
 
 enum PostType {
@@ -138,6 +147,7 @@ model Comment {
   parent     Comment?  @relation("CommentTree", fields: [parentId], references: [id])
   replies    Comment[] @relation("CommentTree")
   votes      Vote[]
+  reports    Report[]
   
   @@index([postId])
   @@index([parentId])
@@ -266,7 +276,7 @@ model Report {
   resolvedBy  String?
   modNotes    String?
   
-  reporter    User         @relation(fields: [reporterId], references: [id])
+  reporter    User         @relation("Reporter", fields: [reporterId], references: [id])
   post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
   comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
   resolver    User?        @relation("ResolvedReports", fields: [resolvedBy], references: [id])
@@ -304,15 +314,28 @@ model Ban {
   userId     String
   spaceId    String?
   reason     String
-  duration   String?   // '1d', '7d', '30d', 'permanent'
+  duration   String?
   expiresAt  DateTime?
   createdAt  DateTime  @default(now())
   createdBy  String
-  
-  user       User      @relation(fields: [userId], references: [id])
+
+  user       User      @relation("BannedUser", fields: [userId], references: [id])
   space      Space?    @relation(fields: [spaceId], references: [id])
   creator    User      @relation("BanCreator", fields: [createdBy], references: [id])
-  
+
   @@index([userId])
   @@index([spaceId])
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
