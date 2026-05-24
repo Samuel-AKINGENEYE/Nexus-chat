@@ -114,3 +114,35 @@ model Comment {
   author    User      @relation(fields: [authorId], references: [id])
   post      Post      @relation(fields: [postId], references: [id])
 }
+
+// Update the existing Post model with missing fields
+model Post {
+  id           String    @id @default(cuid())
+  title        String
+  content      String?
+  authorId     String
+  spaceId      String
+  type         PostType  @default(TEXT)
+  mediaUrls    String[]  @default([])
+  linkUrl      String?
+  upvotes      Int       @default(0)
+  downvotes    Int       @default(0)
+  commentCount Int       @default(0)
+  isPinned     Boolean   @default(false)
+  isLocked     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  
+  // Relations
+  author       User      @relation(fields: [authorId], references: [id])
+  space        Space     @relation(fields: [spaceId], references: [id])
+  comments     Comment[]
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  LINK
+  POLL
+}

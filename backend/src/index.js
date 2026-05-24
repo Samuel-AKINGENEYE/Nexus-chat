@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const spaceRoutes = require('./routes/spaceRoutes');
+const postRoutes = require('./routes/postRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use('/api/spaces', limiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/spaces', spaceRoutes);
+app.use('/api/posts', postRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
