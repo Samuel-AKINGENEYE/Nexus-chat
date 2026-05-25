@@ -375,7 +375,7 @@
         <label class="form-label">Password</label>
         <input class="form-control" id="loginPw" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:2px;" onclick="doLogin()">Sign In</button>
+      <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;margin-top:2px;" onclick="doLogin()">Sign In</button>
     </div>
     <!-- Register -->
     <div id="formReg" style="display:none">
@@ -394,8 +394,9 @@
       <div class="form-group">
         <label class="form-label">Password</label>
         <input class="form-control" id="regPw" type="password" placeholder="Min 8 characters" autocomplete="new-password">
+        <div style="font-size:11.5px;color:var(--text-light);margin-top:4px;">Uppercase, lowercase &amp; a number required</div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:2px;" onclick="doRegister()">Create Account</button>
+      <button class="btn btn-primary" id="regBtn" style="width:100%;justify-content:center;margin-top:2px;" onclick="doRegister()">Create Account</button>
     </div>
   </div>
 </div>
@@ -620,7 +621,11 @@
       const json = await r.json();
       debug(json);
       if (json.tokens) { token = json.tokens.accessToken; localStorage.setItem('nexus_token', token); }
-      if (!r.ok && json.error) throw new Error(json.error);
+      if (!r.ok) {
+        if (json.error) throw new Error(json.error);
+        if (json.errors && json.errors.length) throw new Error(json.errors[0].msg || json.errors[0].message || 'Validation error');
+        throw new Error('Request failed');
+      }
       return json;
     } catch (e) {
       if (e.name === 'TypeError') toast('Server unreachable — is it running on :3001?', 'error');
@@ -676,11 +681,15 @@
     const email = $('loginEmail').value.trim();
     const password = $('loginPw').value;
     if (!email || !password) return toast('Fill in all fields', 'error');
+    const btn = $('loginBtn');
+    if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
     try {
-      await api('/auth/login', 'POST', { email, password }, false);
+      const r = await api('/auth/login', 'POST', { email, password }, false);
+      if (r.tokens) { token = r.tokens.accessToken; localStorage.setItem('nexus_token', token); }
       closeModal('authOverlay');
       await boot(); toast('Welcome back!', 'success');
     } catch (e) { toast(e.message || 'Login failed', 'error'); }
+    finally { if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; } }
   }
 
   async function doRegister() {
@@ -689,12 +698,19 @@
     const email = $('regEmail').value.trim();
     const password = $('regPw').value;
     if (!username || !email || !password) return toast('Fill in all required fields', 'error');
+    if (password.length < 8) return toast('Password must be at least 8 characters', 'error');
+    if (!/[A-Z]/.test(password)) return toast('Password needs an uppercase letter', 'error');
+    if (!/[a-z]/.test(password)) return toast('Password needs a lowercase letter', 'error');
+    if (!/\d/.test(password)) return toast('Password needs at least one number', 'error');
+    const btn = $('regBtn');
+    if (btn) { btn.textContent = 'Creating account…'; btn.disabled = true; }
     try {
-      await api('/auth/register', 'POST', { username, displayName, email, password }, false);
-      await api('/auth/login', 'POST', { email, password }, false);
+      const r = await api('/auth/register', 'POST', { username, displayName, email, password }, false);
+      if (r.tokens) { token = r.tokens.accessToken; localStorage.setItem('nexus_token', token); }
       closeModal('authOverlay');
       await boot(); toast('Account created!', 'success');
     } catch (e) { toast(e.message || 'Registration failed', 'error'); }
+    finally { if (btn) { btn.textContent = 'Create Account'; btn.disabled = false; } }
   }
 
   function logout() {

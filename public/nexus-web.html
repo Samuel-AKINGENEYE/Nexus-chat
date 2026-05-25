@@ -254,7 +254,7 @@
       <div class="form-group">
         <label class="form-label">Password</label>
         <input class="form-control" id="regPw" type="password" placeholder="Min 8 characters" autocomplete="new-password">
-        <div class="form-hint">At least 8 characters</div>
+        <div class="form-hint">At least 8 characters with uppercase, lowercase &amp; a number</div>
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="doRegister()" id="regBtn">Create Account — It's Free</button>
       <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:12px;">Already a member? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--primary);font-weight:600;">Sign in</a></p>
@@ -472,7 +472,11 @@
     const r=await fetch(`${API}${endpoint}`,{method,headers,body:data?JSON.stringify(data):undefined});
     const json=await r.json();
     if(json.tokens){token=json.tokens.accessToken;localStorage.setItem('nexus_token',token);}
-    if(!r.ok&&json.error)throw new Error(json.error);
+    if(!r.ok){
+      if(json.error)throw new Error(json.error);
+      if(json.errors&&json.errors.length)throw new Error(json.errors[0].msg||json.errors[0].message||'Validation error');
+      throw new Error('Request failed');
+    }
     return json;
   }
 
@@ -513,8 +517,11 @@
     const email=$('loginEmail').value.trim(),pw=$('loginPw').value;
     if(!email||!pw)return toast('Fill in all fields','error');
     $('loginBtn').textContent='Signing in…';$('loginBtn').disabled=true;
-    try{await api('/auth/login','POST',{email,password:pw},false);closeModal('authOverlay');await boot();toast('Welcome back! 👋','success');}
-    catch(e){toast(e.message||'Login failed','error');}
+    try{
+      const r=await api('/auth/login','POST',{email,password:pw},false);
+      if(r.tokens){token=r.tokens.accessToken;localStorage.setItem('nexus_token',token);}
+      closeModal('authOverlay');await boot();toast('Welcome back!','success');
+    }catch(e){toast(e.message||'Login failed','error');}
     finally{$('loginBtn').textContent='Sign In';$('loginBtn').disabled=false;}
   }
 
@@ -523,11 +530,14 @@
     const email=$('regEmail').value.trim(),pw=$('regPw').value;
     if(!username||!email||!pw)return toast('Fill in all required fields','error');
     if(pw.length<8)return toast('Password must be at least 8 characters','error');
+    if(!/[A-Z]/.test(pw))return toast('Password needs an uppercase letter','error');
+    if(!/[a-z]/.test(pw))return toast('Password needs a lowercase letter','error');
+    if(!/\d/.test(pw))return toast('Password needs at least one number','error');
     $('regBtn').textContent='Creating account…';$('regBtn').disabled=true;
     try{
-      await api('/auth/register','POST',{username,displayName,email,password:pw},false);
-      await api('/auth/login','POST',{email,password:pw},false);
-      closeModal('authOverlay');await boot();toast('Account created! Welcome to Nexus 🎉','success');
+      const r=await api('/auth/register','POST',{username,displayName,email,password:pw},false);
+      if(r.tokens){token=r.tokens.accessToken;localStorage.setItem('nexus_token',token);}
+      closeModal('authOverlay');await boot();toast('Account created! Welcome to Nexus','success');
     }catch(e){toast(e.message||'Registration failed','error');}
     finally{$('regBtn').textContent='Create Account — It\'s Free';$('regBtn').disabled=false;}
   }

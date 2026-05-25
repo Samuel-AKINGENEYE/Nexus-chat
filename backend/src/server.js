@@ -51,13 +51,27 @@ app.use('/api/moderation', require('./routes/moderationRoutes'));
 app.use('/api/push', require('./routes/pushRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
-// Serve frontend HTML pages from project root
+// Serve frontend from public/ directory
+const PUBLIC_DIR = path.join(PROJECT_ROOT, 'public');
+app.use(express.static(PUBLIC_DIR));
+
+// Serve named pages — prefer public/ versions, fall back to project root
 const htmlPages = ['nexus-web', 'notification-feed', 'moderation-dashboard', 'status', 'test-api'];
+const fs = require('fs');
 htmlPages.forEach(page => {
-  app.get(`/${page}.html`, (req, res) => res.sendFile(path.join(PROJECT_ROOT, `${page}.html`)));
+  app.get(`/${page}.html`, (req, res) => {
+    const publicPath = path.join(PUBLIC_DIR, `${page}.html`);
+    const rootPath = path.join(PROJECT_ROOT, `${page}.html`);
+    res.sendFile(fs.existsSync(publicPath) ? publicPath : rootPath);
+  });
 });
-app.use(express.static(path.join(PROJECT_ROOT, 'public')));
-app.get('/', (req, res) => res.redirect('/nexus-web.html'));
+
+// Serve index.html at root — prefer public/index.html
+app.get('/', (req, res) => {
+  const publicIndex = path.join(PUBLIC_DIR, 'index.html');
+  const rootNexus = path.join(PROJECT_ROOT, 'nexus-web.html');
+  res.sendFile(fs.existsSync(publicIndex) ? publicIndex : rootNexus);
+});
 
 // Health check
 app.get('/health', (req, res) => {
