@@ -4,172 +4,250 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nexus — Notifications</title>
-  <!-- Socket.io client — must match server version -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
   <style>
+    /* ── Design Tokens ──────────────────────────────────────────────────── */
     :root {
-      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff;
-      --secondary: #8b5cf6; --success: #10b981; --danger: #ef4444;
-      --bg: #f8fafc; --surface: #ffffff; --surface-2: #f1f5f9;
-      --border: #e2e8f0; --text: #0f172a; --text-muted: #64748b; --text-light: #94a3b8;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07); --shadow: 0 4px 12px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 28px rgba(0,0,0,0.12);
-      --radius: 12px; --radius-sm: 8px; --radius-full: 9999px;
-      --header-h: 60px; --transition: 0.18s ease;
+      --primary:       #6366f1;
+      --primary-dark:  #4f46e5;
+      --primary-light: #eef2ff;
+      --secondary:     #8b5cf6;
+      --success:       #10b981;
+      --danger:        #ef4444;
+      --bg:        #f8fafc;
+      --surface:   #ffffff;
+      --surface-2: #f1f5f9;
+      --border:    #e2e8f0;
+      --text:       #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow:    0 4px 16px rgba(0,0,0,.08);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.12);
+      --radius:      12px;
+      --radius-sm:   8px;
+      --radius-full: 9999px;
+      --header-h:  60px;
+      --t:         .15s ease;
     }
     [data-theme="dark"] {
-      --bg: #0f172a; --surface: #1e293b; --surface-2: #334155; --border: #334155;
-      --text: #f1f5f9; --text-muted: #94a3b8; --text-light: #475569;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.35); --shadow: 0 4px 12px rgba(0,0,0,0.35);
-      --shadow-lg: 0 8px 28px rgba(0,0,0,0.5);
-      --primary-light: rgba(99,102,241,0.2);
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface-2: #263044;
+      --border:    #334155;
+      --text:       #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-light: #475569;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+      --shadow:    0 4px 16px rgba(0,0,0,.4);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.6);
+      --primary-light: rgba(99,102,241,.15);
     }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; -webkit-font-smoothing:antialiased; }
-    button { font-family:inherit; cursor:pointer; }
 
-    /* Header */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
     .header {
-      position:fixed; top:0; left:0; right:0; height:var(--header-h);
-      background:var(--surface); border-bottom:1px solid var(--border);
-      display:flex; align-items:center; padding:0 20px; gap:12px;
-      z-index:100; box-shadow:var(--shadow-sm);
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 12px;
+      z-index: 100; box-shadow: var(--shadow-sm);
     }
     .back-btn {
-      width:34px; height:34px; border-radius:var(--radius-full); border:none;
-      background:var(--surface-2); color:var(--text-muted); font-size:16px;
-      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+      width: 34px; height: 34px; border-radius: var(--radius-full); border: none;
+      background: var(--surface-2); color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--t);
     }
-    .back-btn:hover { background:var(--primary-light); color:var(--primary); }
-    .page-title { font-size:17px; font-weight:800; color:var(--text); }
-    .header-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .back-btn svg { width: 16px; height: 16px; }
+    .back-btn:hover { background: var(--primary-light); color: var(--primary); }
+    .header-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 16px; font-weight: 800;
+    }
+    .logo-mark {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 13px; font-weight: 900;
+    }
+    .page-title { font-size: 17px; font-weight: 800; color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .icon-btn {
-      width:34px; height:34px; border-radius:var(--radius-full); border:none;
-      background:var(--surface-2); color:var(--text-muted); font-size:14px;
-      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+      width: 34px; height: 34px; border-radius: var(--radius-full); border: none;
+      background: var(--surface-2); color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center; transition: var(--t);
     }
-    .icon-btn:hover { background:var(--primary-light); color:var(--primary); }
+    .icon-btn svg { width: 15px; height: 15px; }
+    .icon-btn:hover { background: var(--primary-light); color: var(--primary); }
 
-    /* Buttons */
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
     .btn {
-      display:inline-flex; align-items:center; gap:5px; padding:8px 16px;
-      border-radius:var(--radius-sm); font-size:13px; font-weight:600;
-      border:none; transition:var(--transition); white-space:nowrap;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      border: none; transition: var(--t); white-space: nowrap;
     }
-    .btn-primary { background:var(--primary); color:#fff; }
-    .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
-    .btn-outline { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
-    .btn-outline:hover { background:var(--surface-2); color:var(--text); }
-    .btn-sm { padding:5px 10px; font-size:12px; }
+    .btn svg { width: 13px; height: 13px; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #8b5cf6); color: #fff; }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--surface-2); color: var(--text); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
 
-    /* Layout */
-    .page { padding-top:var(--header-h); max-width:680px; margin:0 auto; padding-left:16px; padding-right:16px; padding-bottom:32px; }
+    /* ── Page Layout ────────────────────────────────────────────────────── */
+    .page {
+      padding-top: var(--header-h); max-width: 700px;
+      margin: 0 auto; padding-left: 20px; padding-right: 20px;
+      padding-bottom: 40px;
+    }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 8px; flex-wrap: wrap; gap: 10px;
+    }
+    .page-header-left { display: flex; align-items: center; gap: 10px; }
+    .page-heading { font-size: 22px; font-weight: 800; color: var(--text); }
 
-    /* Unread counter chip */
+    /* ── Unread Chip ─────────────────────────────────────────────────────── */
     .count-chip {
-      background:var(--primary-light); color:var(--primary);
-      padding:3px 10px; border-radius:var(--radius-full); font-size:12px; font-weight:700;
+      background: var(--primary-light); color: var(--primary);
+      padding: 3px 11px; border-radius: var(--radius-full);
+      font-size: 12px; font-weight: 700;
     }
 
-    /* Filter tabs */
-    .filter-tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin:16px 0; }
-    .filter-tab {
-      padding:8px 13px; font-size:13px; font-weight:600; color:var(--text-muted);
-      border:none; background:none; border-bottom:2px solid transparent;
-      margin-bottom:-1px; transition:var(--transition); cursor:pointer;
+    /* ── Live Indicator ─────────────────────────────────────────────────── */
+    .live-indicator {
+      display: none; align-items: center; gap: 6px;
+      font-size: 11.5px; color: var(--success); font-weight: 600;
     }
-    .filter-tab:hover { color:var(--text); }
-    .filter-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-
-    /* Notification items */
-    .notif-item {
-      display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
-      background:var(--surface); border-radius:var(--radius);
-      border:1px solid var(--border); margin-bottom:8px;
-      cursor:pointer; transition:var(--transition); box-shadow:var(--shadow-sm);
-      border-left:3px solid var(--primary);
-    }
-    .notif-item:hover { box-shadow:var(--shadow); border-color:rgba(99,102,241,.4); transform:translateX(2px); }
-    .notif-item.read { opacity:.65; border-left-color:var(--border); }
-    .notif-item.read:hover { opacity:.9; }
-    .notif-icon {
-      width:38px; height:38px; border-radius:var(--radius-full); flex-shrink:0;
-      background:var(--primary-light); display:flex; align-items:center; justify-content:center;
-      font-size:18px;
-    }
-    .notif-content { flex:1; min-width:0; }
-    .notif-title-row { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
-    .notif-title { font-size:14px; font-weight:700; color:var(--text); }
-    .new-badge {
-      background:var(--primary); color:#fff; padding:1px 7px;
-      border-radius:var(--radius-full); font-size:10px; font-weight:700;
-      flex-shrink:0;
-    }
-    .notif-body { font-size:13px; color:var(--text-muted); margin-bottom:4px; }
-    .notif-time { font-size:11px; color:var(--text-light); }
-
-    /* Skeleton */
-    .skeleton {
-      background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);
-      background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm);
-    }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    /* Empty state */
-    .empty { text-align:center; padding:48px 16px; color:var(--text-muted); }
-    .empty-icon { font-size:44px; margin-bottom:10px; }
-    .empty-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:5px; }
-    .empty p { font-size:13px; }
-
-    /* Toast */
-    .toasts { position:fixed; bottom:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
-    .toast {
-      background:var(--surface); border:1px solid var(--border); border-radius:10px;
-      padding:10px 14px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:500;
-      display:flex; align-items:center; gap:7px; max-width:280px; pointer-events:auto;
-      animation:toastIn .22s ease;
-    }
-    .toast.success { border-left:3px solid var(--success); }
-    .toast.error   { border-left:3px solid var(--danger); }
-    .toast.info    { border-left:3px solid var(--primary); }
-    @keyframes toastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:none} }
-
-    /* Live dot */
     .live-dot {
-      width:8px; height:8px; border-radius:50%; background:var(--success);
-      display:inline-block; animation:pulse 1.8s infinite;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+      animation: pulse 1.8s infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 
-    /* Section header */
-    .section-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:16px 0 8px; flex-wrap:wrap; gap:8px;
+    /* ── Filter Tabs ────────────────────────────────────────────────────── */
+    .filter-tabs { display: flex; border-bottom: 1.5px solid var(--border); margin: 4px 0 20px; }
+    .filter-tab {
+      padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text-muted);
+      border: none; background: none; border-bottom: 2.5px solid transparent;
+      margin-bottom: -1.5px; transition: var(--t); cursor: pointer;
+      font-family: inherit;
     }
-    .section-header-left { display:flex; align-items:center; gap:10px; }
+    .filter-tab:hover { color: var(--text); }
+    .filter-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ── Notification Items ─────────────────────────────────────────────── */
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 18px; background: var(--surface);
+      border-radius: var(--radius); border: 1px solid var(--border);
+      margin-bottom: 8px; cursor: pointer; transition: var(--t);
+      box-shadow: var(--shadow-sm); border-left: 3px solid var(--primary);
+    }
+    .notif-item:hover { box-shadow: var(--shadow); border-color: rgba(99,102,241,.3); transform: translateX(2px); }
+    .notif-item.read { opacity: .6; border-left-color: var(--border); }
+    .notif-item.read:hover { opacity: .88; }
+    .notif-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-full); flex-shrink: 0;
+      background: var(--primary-light); display: flex; align-items: center; justify-content: center;
+      color: var(--primary);
+    }
+    .notif-icon svg { width: 18px; height: 18px; }
+    .notif-icon.success { background: #ecfdf5; color: var(--success); }
+    .notif-icon.danger  { background: #fef2f2; color: var(--danger); }
+    .notif-icon.warning { background: #fffbeb; color: #b45309; }
+    .notif-content { flex: 1; min-width: 0; }
+    .notif-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .notif-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .new-badge {
+      background: var(--primary); color: #fff; padding: 1px 8px;
+      border-radius: var(--radius-full); font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .notif-body { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.5; }
+    .notif-time { font-size: 11px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+    .notif-time svg { width: 11px; height: 11px; }
+
+    /* ── Skeleton ────────────────────────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius-sm);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Empty State ─────────────────────────────────────────────────────── */
+    .empty { text-align: center; padding: 52px 20px; color: var(--text-muted); }
+    .empty-icon {
+      width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 16px;
+      background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: var(--primary);
+    }
+    .empty-icon svg { width: 28px; height: 28px; }
+    .empty-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty p { font-size: 13px; line-height: 1.5; }
+
+    /* ── Toasts ──────────────────────────────────────────────────────────── */
+    .toasts {
+      position: fixed; bottom: 24px; right: 24px; z-index: 300;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 16px; box-shadow: var(--shadow-lg); font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 9px; max-width: 320px;
+      pointer-events: auto; animation: toastIn .25s cubic-bezier(.22,1,.36,1);
+    }
+    .toast-icon { display: flex; flex-shrink: 0; }
+    .toast-icon svg { width: 15px; height: 15px; }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.error .toast-icon   { color: var(--danger); }
+    .toast.info    { border-left: 3px solid var(--primary); }
+    .toast.info .toast-icon    { color: var(--primary); }
+    @keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
   </style>
 </head>
 <body>
 <div class="toasts" id="toasts"></div>
 
 <header class="header">
-  <button class="back-btn" onclick="history.back()" title="Back">←</button>
-  <div class="page-title">🔔 Notifications</div>
+  <button class="back-btn" onclick="history.back()" title="Go back" aria-label="Go back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  </button>
+  <div class="header-logo">
+    <div class="logo-mark">N</div>
+  </div>
+  <span class="page-title">Notifications</span>
   <div class="header-right">
     <span class="count-chip" id="unreadChip" style="display:none">0 unread</span>
-    <span id="liveIndicator" style="display:none;align-items:center;gap:5px;font-size:11px;color:var(--success);font-weight:600;">
+    <span class="live-indicator" id="liveIndicator">
       <span class="live-dot"></span> Live
     </span>
-    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
     <button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark all read</button>
-    <button class="btn btn-outline btn-sm" onclick="loadNotifs()">Refresh</button>
+    <button class="btn btn-outline btn-sm" onclick="loadNotifs()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Refresh
+    </button>
   </div>
 </header>
 
 <div class="page">
-  <div class="section-header">
-    <div class="section-header-left">
-      <span style="font-size:14px;font-weight:600;color:var(--text);">Your activity feed</span>
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-heading">Activity Feed</h1>
     </div>
   </div>
 
@@ -184,30 +262,49 @@
 </div>
 
 <script>
-  // In production, Vercel proxies /api/* to the Render backend
   const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const API = IS_LOCAL ? 'http://localhost:3001/api' : '/api';
-  // Socket.io must connect directly to the backend (WebSocket upgrades can't be proxied by Vercel)
   const SOCKET_HOST = IS_LOCAL ? 'http://localhost:3001' : 'https://nexus-chat-befb.onrender.com';
   const token = localStorage.getItem('nexus_token') || localStorage.getItem('token') || '';
   let allNotifs = [];
   let activeFilter = 'all';
   let socket = null;
 
-  if (!token) { window.location.href = '/nexus-web.html'; }
+  if (!token) { window.location.href = '/'; }
 
-  /* ── Utils ── */
   const $ = id => document.getElementById(id);
 
-  function toast(msg, type = 'info') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
-    $('toasts').appendChild(t);
-    setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3200);
+  /* ── Theme ── */
+  (()=>{
+    const s = localStorage.getItem('nexus_theme');
+    if (s) {
+      document.documentElement.setAttribute('data-theme', s);
+      if (s==='dark') { $('themeIconMoon').style.display='none'; $('themeIconSun').style.display=''; }
+    }
+  })();
+  function toggleTheme(){
+    const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    $('themeIconMoon').style.display = next==='dark'?'none':'';
+    $('themeIconSun').style.display  = next==='dark'?'':'none';
+    localStorage.setItem('nexus_theme', next);
   }
 
-  function timeAgo(d) {
+  /* ── Toast ── */
+  const TOAST_ICONS={
+    success:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    error:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    info:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+  };
+  function toast(msg, type='info'){
+    const t = document.createElement('div');
+    t.className=`toast ${type}`;
+    t.innerHTML=`<span class="toast-icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span>${msg}</span>`;
+    $('toasts').appendChild(t);
+    setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300);},3200);
+  }
+
+  function timeAgo(d){
     const s = Math.floor((Date.now() - new Date(d)) / 1000);
     if (s < 60) return `${s}s ago`;
     if (s < 3600) return `${Math.floor(s/60)}m ago`;
@@ -215,148 +312,131 @@
     return new Date(d).toLocaleDateString();
   }
 
-  function esc(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+  function esc(s){ return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
-  /* ── Theme ── */
-  function toggleTheme() {
-    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
-    localStorage.setItem('nexus_theme', next);
-  }
-  (()=>{
-    const s = localStorage.getItem('nexus_theme');
-    if (s) { document.documentElement.setAttribute('data-theme', s); if (s==='dark') $('themeBtn').textContent='☀️'; }
-  })();
-
-  /* ── API ── */
-  async function api(endpoint, method = 'GET', data = null) {
+  async function api(endpoint, method='GET', data=null){
     const r = await fetch(`${API}${endpoint}`, {
       method,
-      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
       body: data ? JSON.stringify(data) : undefined
     });
     return r.json();
   }
 
   /* ── Filter ── */
-  function setFilter(f, el) {
+  function setFilter(f, el){
     activeFilter = f;
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
     renderNotifs();
   }
 
-  /* ── Render ── */
-  const ICONS = {
-    COMMENT_ON_POST: '💬', REPLY_TO_COMMENT: '↩️', MENTION: '@️',
-    NEW_DM: '✉️', UPVOTE_MILESTONE: '👍', NEW_POST_IN_SPACE: '📝',
-    MOD_ACTION: '🛡️', SPACE_INVITE: '🏠'
+  /* ── Icon Map ── */
+  const NOTIF_ICONS = {
+    COMMENT_ON_POST: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    REPLY_TO_COMMENT:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`,
+    MENTION:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>`,
+    NEW_DM:          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+    UPVOTE_MILESTONE:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
+    NEW_POST_IN_SPACE:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    MOD_ACTION:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    SPACE_INVITE:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
   };
+  const DEFAULT_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+  const CLOCK_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
-  function renderNotifs() {
+  /* ── Render ── */
+  function renderNotifs(){
     const el = $('notifList');
     let list = allNotifs;
+    if (activeFilter==='unread') list = list.filter(n=>!n.isRead);
+    else if (activeFilter!=='all') list = list.filter(n=>n.type===activeFilter);
 
-    if (activeFilter === 'unread') list = list.filter(n => !n.isRead);
-    else if (activeFilter !== 'all') list = list.filter(n => n.type === activeFilter);
-
-    if (!list.length) {
-      const msgs = { unread:'You\'re all caught up!', all:'No notifications yet' };
-      el.innerHTML = `<div class="empty"><div class="empty-icon">${activeFilter==='unread'?'✓':'🔔'}</div><div class="empty-title">${msgs[activeFilter]||'Nothing here'}</div><p>Check back later for updates.</p></div>`;
+    if (!list.length){
+      const isUnread = activeFilter==='unread';
+      el.innerHTML=`<div class="empty">
+        <div class="empty-icon${isUnread?' success':''}">${isUnread?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`:DEFAULT_ICON}</div>
+        <div class="empty-title">${isUnread?"You're all caught up!":'No notifications yet'}</div>
+        <p>Check back later for updates.</p>
+      </div>`;
       return;
     }
 
-    el.innerHTML = list.map(n => `
-      <div class="notif-item ${n.isRead ? 'read' : ''}" onclick="readNotif('${n.id}')">
-        <div class="notif-icon">${ICONS[n.type] || '🔔'}</div>
+    el.innerHTML = list.map(n=>`
+      <div class="notif-item ${n.isRead?'read':''}" onclick="readNotif('${n.id}')">
+        <div class="notif-icon">${NOTIF_ICONS[n.type]||DEFAULT_ICON}</div>
         <div class="notif-content">
           <div class="notif-title-row">
             <span class="notif-title">${esc(n.title)}</span>
-            ${!n.isRead ? '<span class="new-badge">New</span>' : ''}
+            ${!n.isRead?'<span class="new-badge">New</span>':''}
           </div>
           <div class="notif-body">${esc(n.body)}</div>
-          <div class="notif-time">${timeAgo(n.createdAt)}</div>
+          <div class="notif-time">${CLOCK_ICON}${timeAgo(n.createdAt)}</div>
         </div>
       </div>`).join('');
   }
 
-  function updateUnreadChip() {
-    const unread = allNotifs.filter(n => !n.isRead).length;
+  function updateUnreadChip(){
+    const unread = allNotifs.filter(n=>!n.isRead).length;
     const chip = $('unreadChip');
-    if (unread > 0) { chip.textContent = `${unread} unread`; chip.style.display = 'inline-block'; }
-    else { chip.style.display = 'none'; }
+    if (unread>0){chip.textContent=`${unread} unread`;chip.style.display='inline-block';}
+    else chip.style.display='none';
   }
 
-  /* ── API actions ── */
-  async function loadNotifs() {
-    $('notifList').innerHTML = `<div class="notif-item skeleton" style="height:72px;border-left:none;cursor:default;"></div>`.repeat(4);
-    try {
+  /* ── API Actions ── */
+  async function loadNotifs(){
+    $('notifList').innerHTML=`<div class="notif-item skeleton" style="height:72px;border-left:none;cursor:default;pointer-events:none;"></div>`.repeat(5);
+    try{
       const r = await api('/notifications?limit=60');
-      allNotifs = r.notifications || [];
+      allNotifs = r.notifications||[];
       updateUnreadChip();
       renderNotifs();
-    } catch {
-      $('notifList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div><p>Could not reach the server.</p></div>`;
+    }catch{
+      $('notifList').innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-title">Could not load notifications</div><p>Check your connection and try again.</p></div>`;
     }
   }
 
-  async function readNotif(id) {
-    const n = allNotifs.find(x => x.id === id);
-    if (n && !n.isRead) {
-      n.isRead = true;
+  async function readNotif(id){
+    const n = allNotifs.find(x=>x.id===id);
+    if (n&&!n.isRead){
+      n.isRead=true;
       renderNotifs();
       updateUnreadChip();
-      await api(`/notifications/${id}/read`, 'PUT');
+      await api(`/notifications/${id}/read`,'PUT');
     }
   }
 
-  async function markAllRead() {
-    try {
-      await api('/notifications/read/all', 'PUT');
-      allNotifs.forEach(n => n.isRead = true);
+  async function markAllRead(){
+    try{
+      await api('/notifications/read/all','PUT');
+      allNotifs.forEach(n=>n.isRead=true);
       renderNotifs();
       updateUnreadChip();
-      toast('All notifications marked as read', 'success');
-    } catch { toast('Failed to mark as read', 'error'); }
+      toast('All notifications marked as read','success');
+    }catch{toast('Failed to mark as read','error');}
   }
 
   /* ── Real-time via Socket.io ── */
-  function setupSocket() {
-    try {
-      socket = io(SOCKET_HOST, {
-        auth: { token },
-        transports: ['websocket', 'polling'],
-        reconnectionAttempts: 3
-      });
-
-      socket.on('connect', () => {
-        $('liveIndicator').style.display = 'flex';
-      });
-
-      socket.on('disconnect', () => {
-        $('liveIndicator').style.display = 'none';
-      });
-
-      socket.on('connect_error', () => {
-        $('liveIndicator').style.display = 'none';
-      });
-
-      socket.on('notification', (notif) => {
+  function setupSocket(){
+    try{
+      socket = io(SOCKET_HOST,{auth:{token},transports:['websocket','polling'],reconnectionAttempts:3});
+      socket.on('connect',()=>{ $('liveIndicator').style.display='flex'; });
+      socket.on('disconnect',()=>{ $('liveIndicator').style.display='none'; });
+      socket.on('connect_error',()=>{ $('liveIndicator').style.display='none'; });
+      socket.on('notification',(notif)=>{
         allNotifs.unshift(notif);
         updateUnreadChip();
         renderNotifs();
-        toast(notif.title || 'New notification', 'info');
+        toast(notif.title||'New notification','info');
       });
-    } catch (e) {
-      console.warn('Socket.io connection failed:', e.message);
+    }catch(e){
+      console.warn('Socket.io connection failed:',e.message);
     }
   }
 
-  /* ── Init ── */
   loadNotifs();
   setupSocket();
-  setInterval(loadNotifs, 30000);
+  setInterval(loadNotifs,30000);
 </script>
 </body>
 </html>
